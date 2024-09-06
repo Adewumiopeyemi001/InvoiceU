@@ -30,12 +30,12 @@ const emailSenderTemplate = async (msg, subject, receiver) => {
 
     await transporter.sendMail(mailOptions);
 
-    return `Message sent' `;
-  } catch (err) {
-    console.log(err);
-    throw new CustomError(500, 'Server Error');
-  }
-};
+//     return `Message sent' `;
+//   } catch (err) {
+//     console.log(err);
+//     throw new CustomError(500, 'Server Error');
+//   }
+// };
 
 
 export default emailSenderTemplate
