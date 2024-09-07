@@ -41,10 +41,23 @@ const userSchema = new mongoose.Schema({
         message: 'Invalid phone number format, should start with + followed by country code and then 1-14 digits.'
     }
    },
+   city: {
+    type: String,
+    // required: true,
+   },
+   address: {
+    type: String,
+    // required: true,
+   },
    registrationDate: {
     type: Date,
     default: Date.now,
    },
+   profilePicture: {
+    type: String,
+    default:
+      "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+  },
 },
 {
     timestamps: true,

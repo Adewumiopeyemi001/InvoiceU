@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/users.js';
-import { errorResMsg } from '../lib/response.js';
+import User from '../models/users.model.js';
+import { errorResMsg } from '../lib/responses.js';
 
 export const authenticateUser = async (req, res, next) => {
   try {
