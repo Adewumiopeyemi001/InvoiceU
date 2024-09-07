@@ -1,13 +1,15 @@
 import mongoose from "mongoose";
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema({
    firstName: {
      type: String,
-     required: true
+    //  required: true
    },
    lastName: {
      type: String,
-     required: true
+    //  required: true
    },
    email: {
     type: String,
@@ -16,9 +18,9 @@ const userSchema = new mongoose.Schema({
    },
    password: {
     type: String,
-    required: true,
-    minlength: 3,
-   },
+    required: [true, 'Password is required'],
+    minlength: [3, 'Password must be at least 3 characters long'],
+  },
    emailStatus: {
     type: Boolean,
     default: false,
@@ -28,17 +30,9 @@ const userSchema = new mongoose.Schema({
     enum: [1, 2], // 1 = user, 2 = admin
     default: 1,
   },
-   companyName: {
-    type: String,
-    required: true,
-   },
-   expertise: {
-    type: String,
-    required: true,
-   },
    phoneNumber: {
     type: String,
-    required: true,
+    // required: true,
     unique: true,
     validate: {
         validator: (value) => {
@@ -46,32 +40,6 @@ const userSchema = new mongoose.Schema({
         },
         message: 'Invalid phone number format, should start with + followed by country code and then 1-14 digits.'
     }
-   },
-   address: {
-    type: String,
-    required: true,
-   },
-   city: {
-    type: String,
-    required: true,
-   },
-   state: {
-    type: String,
-    required: true,
-   },
-   zipCode: {
-    type: String,
-    required: true,
-    validate: {
-        validator: (value) => {
-            return /\d{5}(?:[-\s]\d{4})?/.test(value);
-        },
-        message: 'Invalid zip code format.'
-    }
-   },
-   country: {
-    type: String,
-    required: true,
    },
    registrationDate: {
     type: Date,
