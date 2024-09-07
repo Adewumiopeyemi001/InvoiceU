@@ -2,6 +2,7 @@ import express from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { connectDB } from './src/config/db.js';
+import userRouter from './src/routes/users.route.js';
 
 dotenv.config();
 
@@ -14,6 +15,8 @@ const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => {
   res.send('Welcome to invoiceU');
 });
+
+app.use('/', userRouter)
 
 const server = app.listen(PORT, async () => {
   try {
