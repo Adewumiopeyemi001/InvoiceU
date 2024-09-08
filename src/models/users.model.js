@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema({
    password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [3, 'Password must be at least 3 characters long'],
   },
    emailStatus: {
     type: Boolean,
@@ -34,12 +33,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     // required: true,
     unique: true,
-    validate: {
-        validator: (value) => {
-            return /^\+\d{1,3}-\d{1,14}$/.test(value);
-        },
-        message: 'Invalid phone number format, should start with + followed by country code and then 1-14 digits.'
-    }
+    // validate: {
+    //     validator: (value) => {
+    //         return /^\+\d{1,3}-\d{1,14}$/.test(value);
+    //     },
+    //     message: 'Invalid phone number format, should start with + followed by country code and then 1-14 digits.'
+    // }
    },
    city: {
     type: String,
@@ -57,6 +56,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     default:
       "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+  },
+  resetPasswordToken: {
+    type: String,
+    // required: true,
+  },
+  resetPasswordExpires: {
+    type: Date,
   },
 },
 {
