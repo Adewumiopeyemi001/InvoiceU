@@ -6,6 +6,7 @@ import path from 'path';
 import emailSenderTemplate from "../middlewares/email.js";
 import ejs from 'ejs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { checkExistingPassword, checkExistingUser } from "../middlewares/services.js";
 import cloudinary from "../public/images/cloudinary.js";
 
@@ -29,7 +30,7 @@ export const register = async (req, res) => {
     });
 
     const token = jwt.sign({ userId: newUser._id }, process.env.SECRET_KEY, {
-      expiresIn: '1h', // Token expiration time
+      expiresIn: process.env.expiresIn // Token expiration time
     });
 
     const verificationLink = `${req.protocol}://${req.get('host')}/verify-email?token=${token}`;
@@ -193,6 +194,123 @@ export const updateProfile = async(req, res) => {
   } catch (error) {
     console.error(error);
     return errorResMsg(res, 500, "Server Error");
+    
+  }
+};
+
+export const forgotPassword = async(req, res) => {
+  try {
+    const { email } = req.body;
+    if(!email) {
+        return errorResMsg(res, 400, 'Please enter your email address');
+    }
+    const user = await checkExistingUser(email);
+    if(!user) {
+        return errorResMsg(res, 401, 'Invalid email address');
+    }
+
+    // Check if there's already an unexpired reset token
+    if (user.resetPasswordToken && user.resetPasswordExpires > Date.now()) {
+      return successResMsg(res, 200, {
+        success: true,
+        resetPasswordToken: user.resetPasswordToken,
+        message: 'A reset token is already sent. Please check your email.',
+      });
+    }
+    
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    
+   // Store the token and expiration in the user's record
+   user.resetPasswordToken = resetToken;
+   user.resetPasswordExpires = resetPasswordExpires;
+   await user.save();
+
+   // Create reset password URL
+   const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
+    
+    const currentFilePath = fileURLToPath(import.meta.url);
+    const currentDir = dirname(currentFilePath);
+    const templatePath = path.join(
+      currentDir,
+      '../public/emails/forgotPassword.ejs'
+    );
+
+    await ejs.renderFile(
+      templatePath,
+      {
+        title: 'Reset Your Password',
+        resetPasswordToken: resetUrl,
+        firstName: user.firstName
+      },
+      async (err, data) => {
+        await emailSenderTemplate(data, 'Reset Your Password', email);
+      }
+    );
+
+    return successResMsg(res, 200, {
+      success: true,
+      resetPasswordToken: resetUrl,
+      message: 'Please check your email to reset your password',
+    });
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, "Server Error");
+    
+  }
+};
+
+export const resetPassword = async(req, res) => {
+  try {
+    const { newPassword, confirmPassword } = req.body;
+    const token = req.query.token;
+    if(!token ||!newPassword || !confirmPassword) {
+        return errorResMsg(res, 400, 'Please provide a token and password');
+    }
+    if(newPassword!== confirmPassword) {
+        return errorResMsg(res, 400, 'Passwords do not match');
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+    if(!user) {
+        return errorResMsg(res, 401, 'Invalid token or token expired');
+    }
+    user.password = newPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    const currentFilePath = fileURLToPath(import.meta.url);
+    const currentDir = dirname(currentFilePath);
+    const templatePath = path.join(
+      currentDir,
+      '../public/emails/resetpassword.ejs'
+    );
+
+    await ejs.renderFile(
+      templatePath,
+      {
+        title: `Hello ${user.firstName},`,
+        body: 'Password Reset Successfully, Please Login',
+      },
+      async (err, data) => {
+        await emailSenderTemplate(
+          data,
+          'Password Reset Successfully',
+          user.email
+        );
+      }
+    );
+
+    return successResMsg(res, 200, {
+      success: true,
+      message: 'Password reset successfully',
+    });
+    
+  } catch (error) {
     
   }
 };
