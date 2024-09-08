@@ -96,6 +96,10 @@ export const login = async(req, res) => {
 
     const token = user.generateAuthToken();
 
+      // Add the token to the user's tokens array and save it
+    user.tokens = user.tokens.concat({ token });
+    await user.save();
+
     return successResMsg(res, 200, {
       success: true,
       data: {
@@ -314,3 +318,24 @@ export const resetPassword = async(req, res) => {
     
   }
 };
+
+export const logout = async (req, res) => {
+  try {
+    if (!req.user) {
+      return errorResMsg(res, 401, 'Unauthorized');
+    }
+
+    // Filter out the current session token from the user's tokens array
+    req.user.tokens = req.user.tokens.filter((tokenObj) => tokenObj.token !== req.token);
+    await req.user.save();
+
+    return successResMsg(res, 200, {
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+  }
+};
+

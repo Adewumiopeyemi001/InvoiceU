@@ -29,24 +29,20 @@ const userSchema = new mongoose.Schema({
     enum: [1, 2], // 1 = user, 2 = admin
     default: 1,
   },
+    tokens: [
+    {
+      token: { type: String, required: true }
+    }
+  ],
    phoneNumber: {
     type: String,
-    // required: true,
     unique: true,
-    // validate: {
-    //     validator: (value) => {
-    //         return /^\+\d{1,3}-\d{1,14}$/.test(value);
-    //     },
-    //     message: 'Invalid phone number format, should start with + followed by country code and then 1-14 digits.'
-    // }
    },
    city: {
     type: String,
-    // required: true,
    },
    address: {
     type: String,
-    // required: true,
    },
    registrationDate: {
     type: Date,
@@ -59,7 +55,6 @@ const userSchema = new mongoose.Schema({
   },
   resetPasswordToken: {
     type: String,
-    // required: true,
   },
   resetPasswordExpires: {
     type: Date,
