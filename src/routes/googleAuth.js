@@ -19,9 +19,12 @@ const router = express.Router();
 router.get(
   '/auth/google/redirect',
   passport.authenticate('google', { failureRedirect: '/login' }),
-  async(req, res) => {
+  async (req, res) => {
     // Successful authentication
     const token = req.user.generateAuthToken();
+
+    // Extract the user's email from the authenticated user object (req.user)
+    const userEmail = req.user.email;
 
     const verificationLink = `${req.protocol}://${req.get('host')}/verify-email?token=${token}`;
 
@@ -44,11 +47,10 @@ router.get(
         await emailSenderTemplate(
           data,
           'Account Created Successfully - Verify Your Email',
-          email
+          userEmail // Use the extracted userEmail
         );
       }
     );
-
 
     successResMsg(res, 200, {
       success: true,
@@ -58,6 +60,7 @@ router.get(
     });
   }
 );
+
 
 // Logout
 router.get('/logout', (req, res) => {
