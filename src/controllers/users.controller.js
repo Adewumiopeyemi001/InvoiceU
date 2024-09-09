@@ -324,9 +324,11 @@ export const logout = async (req, res) => {
     if (!req.user) {
       return errorResMsg(res, 401, 'Unauthorized');
     }
-
     // Filter out the current session token from the user's tokens array
-    req.user.tokens = req.user.tokens.filter((tokenObj) => tokenObj.token !== req.token);
+    req.user.tokens = req.user.tokens.filter((tokenObj) => {
+      return tokenObj.token !== req.token;
+    });
+    // Save the updated user
     await req.user.save();
 
     return successResMsg(res, 200, {
@@ -338,4 +340,5 @@ export const logout = async (req, res) => {
     return errorResMsg(res, 500, 'Server Error');
   }
 };
+
 

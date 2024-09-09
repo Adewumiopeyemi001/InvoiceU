@@ -1,10 +1,14 @@
 import express from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import passport from 'passport';
+import session from 'express-session';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './src/config/db.js';
 import userRouter from './src/routes/users.route.js';
+import authRoutes from './src/routes/googleAuth.js'
+import passportSetup from './src/config/passport.js';
 
 dotenv.config();
 
@@ -29,11 +33,18 @@ const swaggerSpec = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const PORT = process.env.PORT || 3000;
+
+app.use(
+  session({ secret: 'your_secret_key', resave: false, saveUninitialized: true })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 app.get('/', (req, res) => {
   res.send('Welcome to invoiceU');
 });
 
-app.use('/', userRouter)
+app.use('/', userRouter);
+app.use('/', authRoutes);
 
 const server = app.listen(PORT, async () => {
   try {
