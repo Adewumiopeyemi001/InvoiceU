@@ -24,9 +24,7 @@ passport.use(
           if (!user) {
             user = await User.create({
               googleId: profile.id,
-              userName: profile.displayName,
               email: profile.emails[0].value,
-              role: 1, // You can set default roles or modify as needed
               password: '12345',
             });
           }

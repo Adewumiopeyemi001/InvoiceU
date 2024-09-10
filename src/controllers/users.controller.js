@@ -29,8 +29,9 @@ export const register = async (req, res) => {
       emailStatus: false,
     });
 
-    const token = jwt.sign({ userId: newUser._id }, process.env.SECRET_KEY, {
-      expiresIn: process.env.expiresIn // Token expiration time
+    // Use _id instead of userId in the token
+    const token = jwt.sign({ _id: newUser._id }, process.env.SECRET_KEY, {
+      expiresIn: process.env.expiresIn, // Token expiration time
     });
 
     const verificationLink = `${req.protocol}://${req.get('host')}/verify-email?token=${token}`;
@@ -114,29 +115,41 @@ export const login = async(req, res) => {
   }
 };
 
-export const verifyEmail = async(req, res) => {
+export const verifyEmail = async (req, res) => {
   try {
     const token = req.query.token;
-    if(!token) {
-        return errorResMsg(res, 400, 'Invalid Token');
+    if (!token) {
+      return errorResMsg(res, 400, 'Invalid Token');
     }
+
+    // Decode the token
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    const userId = decoded.userId;
-    const user = await User.findByIdAndUpdate(userId, {emailStatus: null}, {new: true});
-    if(!user) {
-        return errorResMsg(res, 400, 'User not found');
-    }
-    return successResMsg(res, 200, {
-        success: true,
-        message: 'Email verified successfully',
-      });
+
+    // Use _id instead of userId (to match the token payload)
+    const userId = decoded._id;
     
+    const user = await User.findByIdAndUpdate(userId, { emailStatus: null }, { new: true });
+    if (!user) {
+      return errorResMsg(res, 400, 'User not found');
+    }
+    // Generate a new token for the user session after successful verification
+    const sessionToken = user.generateAuthToken();
+
+    // Add the token to the user's tokens array and save it
+    user.tokens = user.tokens.concat({ token: sessionToken });
+    await user.save();
+
+    return successResMsg(res, 200, {
+      success: true,
+      message: 'Email verified successfully',
+      token: sessionToken,  
+    });
   } catch (error) {
     console.error(error);
-    return errorResMsg(res, 500, "Server Error");
-    
+    return errorResMsg(res, 500, 'Server Error');
   }
 };
+
 
 export const getProfile = async(req, res) => {
   try {
