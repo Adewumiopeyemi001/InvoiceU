@@ -155,8 +155,6 @@ export const verifyEmail = async (req, res) => {
 export const getProfile = async(req, res) => {
   try {
     const user = req.user;
-    console.log(user);
-    
     if(!user) {
         return errorResMsg(res, 401, 'User not found');
     }
@@ -181,39 +179,91 @@ export const getProfile = async(req, res) => {
   }
 };
 
-export const updateProfile = async(req, res) => {
+export const updateProfile = async (req, res) => {
   try {
     const user = req.user;
-    const { firstName, lastName, phoneNumber, city } = req.body;
-    const {companyName, companyLogo, occupation, industry, country, state, zipCode, address } = req.body;
-    const profilePicture = req.file;
-    if(!firstName ||!lastName || !phoneNumber || !city || !address) {
-        return errorResMsg(res, 400, 'Please fill in the first name, last name, phone number, city and address');
+    const { 
+      firstName, 
+      lastName, 
+      phoneNumber, 
+      city,
+      companyName, 
+      occupation, 
+      industry, 
+      country, 
+      state, 
+      zipCode, 
+      address 
+    } = req.body;
+    const companyLogo = req.file;
+
+    // Check required fields
+    if (
+      !firstName || !lastName || !phoneNumber || !city || !address ||
+      !companyName || !occupation || !industry || !country || !state || !zipCode
+    ) {
+      return errorResMsg(res, 400, 'Please fill in the required fields');
     }
-    if(!profilePicture) {
-      return errorResMsg(res, 400, 'Please upload a profile picture');
+
+    if (!companyLogo) {
+      return errorResMsg(res, 400, 'Please upload a company logo');
     }
-    const result = await cloudinary.v2.uploader.upload(profilePicture.path);
-    const updatedUser = await User.findByIdAndUpdate(user._id, {firstName, lastName, phoneNumber, city, address, profilePicture: result.secure_url}, {new: true});
-    if(!updatedUser) {
-        return errorResMsg(res, 400, 'User not found');
+
+    // Upload company logo to Cloudinary
+    const result = await cloudinary.v2.uploader.upload(companyLogo.path);
+
+    // Update User details
+    const updatedUser = await User.findByIdAndUpdate(user._id, {
+      firstName, 
+      lastName, 
+      phoneNumber, 
+      city
+    }, { new: true });
+
+    if (!updatedUser) {
+      return errorResMsg(res, 404, 'User not found');
     }
+
+    // Update or create Company details
+    let updatedCompany = await Company.findOneAndUpdate(
+      { user: user._id }, // Find the company linked to the user
+      {
+        companyName, 
+        companyLogo: result.secure_url, 
+        occupation, 
+        industry, 
+        country, 
+        state, 
+        zipCode, 
+        address
+      },
+      { new: true, upsert: true } // Create a new company if it doesn't exist
+    );
+
+    // Combine both updates
     const filteredUser = {
       firstName: updatedUser.firstName,
       lastName: updatedUser.lastName,
       phoneNumber: updatedUser.phoneNumber,
       city: updatedUser.city,
       address: updatedUser.address,
-      profilePicture: updatedUser.profilePicture
-    }
+      companyName: updatedCompany.companyName,
+      companyLogo: updatedCompany.companyLogo,
+      occupation: updatedCompany.occupation,
+      industry: updatedCompany.industry,
+      country: updatedCompany.country,
+      state: updatedCompany.state,
+      zipCode: updatedCompany.zipCode
+    };
+
     return successResMsg(res, 200, {
-        success: true,
-        user: filteredUser,
-      });
+      success: true,
+      user: filteredUser
+    });
+
   } catch (error) {
     console.error(error);
     return errorResMsg(res, 500, "Server Error");
-    
   }
 };
 

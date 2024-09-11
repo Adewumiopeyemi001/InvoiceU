@@ -7,7 +7,8 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { connectDB } from './src/config/db.js';
 import userRouter from './src/routes/users.route.js';
-import authRoutes from './src/routes/googleAuth.js'
+import authRoutes from './src/routes/googleAuth.js';
+import clientRoutes from './src/routes/clients.route.js';
 import passportSetup from './src/config/passport.js';
 
 dotenv.config();
@@ -45,6 +46,7 @@ app.get('/', (req, res) => {
 
 app.use('/', userRouter);
 app.use('/', authRoutes);
+app.use('/', clientRoutes);
 
 const server = app.listen(PORT, async () => {
   try {

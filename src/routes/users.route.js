@@ -195,7 +195,7 @@ router.get('/verify-email', verifyEmail);
  */
 
 router.get('/myprofile', authenticateUser, getProfile);
-router.put('/updateprofile', authenticateUser, upload.single("profilePicture"), updateProfile);
+router.put('/updateprofile', authenticateUser, upload.single("companyLogo"), updateProfile);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/logout', authenticateUser, logout);
