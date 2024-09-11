@@ -1,4 +1,5 @@
 import User from "../models/users.model.js";
+import Company from "../models/companys.model.js";
 import {errorResMsg, successResMsg} from '../lib/responses.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -183,7 +184,8 @@ export const getProfile = async(req, res) => {
 export const updateProfile = async(req, res) => {
   try {
     const user = req.user;
-    const { firstName, lastName, phoneNumber, city, address } = req.body;
+    const { firstName, lastName, phoneNumber, city } = req.body;
+    const {companyName, companyLogo, occupation, industry, country, state, zipCode, address } = req.body;
     const profilePicture = req.file;
     if(!firstName ||!lastName || !phoneNumber || !city || !address) {
         return errorResMsg(res, 400, 'Please fill in the first name, last name, phone number, city and address');
