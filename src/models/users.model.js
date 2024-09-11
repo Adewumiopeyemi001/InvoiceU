@@ -3,6 +3,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema({
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+        ref: "Company",
+  },
    firstName: {
      type: String,
     //  required: true
@@ -39,9 +43,6 @@ const userSchema = new mongoose.Schema({
     unique: true,
    },
    city: {
-    type: String,
-   },
-   address: {
     type: String,
    },
    registrationDate: {
