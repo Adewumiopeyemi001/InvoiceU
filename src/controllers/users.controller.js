@@ -15,7 +15,7 @@ export const register = async (req, res) => {
   try {
     const { email, password, role } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ message: "All fields are required." });
+      return res.status(400).json({ message: "Enter your email address and password." });
     }
 
     const existingUser = await checkExistingUser(email);
