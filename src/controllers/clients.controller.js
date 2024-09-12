@@ -35,11 +35,9 @@ export const addClient = async (req, res) => {
     }
 
     // Look up client by email or businessName
-    const existingClient = await Client.findOne({
-      $or: [{ email }, { businessName }]
-    });
+    const existingClient = await Client.findOne({ businessName });
     if (existingClient) {
-      return errorResMsg(res, 400, 'Client with the same email or business name already exists');
+      return errorResMsg(res, 400, 'Client with the same business name already exists');
     }
 
     // Create and save the new client
@@ -57,6 +55,57 @@ export const addClient = async (req, res) => {
     await client.save();
 
     return successResMsg(res, 201, {
+      success: true,
+      client
+    });
+
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+  }
+};
+
+export const getClientsByUserId = async (req, res) => {
+  try {
+    const user = req.user;
+    const { page = 1, limit = 10 } = req.query;
+    if (!user) {
+      return errorResMsg(res, 401, 'User not found');
+    }
+    
+    const clients = await Client.find({ user: user._id })
+     .skip((page - 1) * limit)
+     .limit(parseInt(limit))
+     .exec();
+     
+    return successResMsg(res, 200, {
+      success: true,
+      clients
+    });
+    
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+    
+  }
+};
+
+export const getClientById = async (req, res) => {
+  try {
+    const user = req.user;
+    const clientId = req.params.clientId;
+
+    if (!user) {
+      return errorResMsg(res, 401, 'User not found');
+    }
+
+    const client = await Client.findOne({ _id: clientId, user: user._id });
+
+    if (!client) {
+      return errorResMsg(res, 404, 'Client not found');
+    }
+
+    return successResMsg(res, 200, {
       success: true,
       client
     });

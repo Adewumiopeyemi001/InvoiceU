@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import '../config/passport.js'; // Ensure this file is imported to configure passport
-import { googleSign, linkedinLogin } from '../controllers/google.user.js';
+import { googleSign } from '../controllers/google.user.js';
 
 const router = express.Router();
 
@@ -15,14 +15,14 @@ router.get(
   passport.authenticate('google', { failureRedirect: '/login' }), googleSign);
 
   // Redirect the user to LinkedIn for authentication
-router.get('/auth/linkedin', passport.authenticate('linkedin', { scope: ['email'] }));
+// router.get('/auth/linkedin', passport.authenticate('linkedin', { scope: ['email'] }));
 
-// Handle the callback after LinkedIn has authenticated the user
-router.get(
-  '/auth/linkedin/redirect',
-  passport.authenticate('linkedin', { failureRedirect: '/login' }),
-  linkedinLogin
-);
+// // Handle the callback after LinkedIn has authenticated the user
+// router.get(
+//   '/auth/linkedin/redirect',
+//   passport.authenticate('linkedin', { failureRedirect: '/login' }),
+//   linkedinLogin
+// );
 
 
 export default router;

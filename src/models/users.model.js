@@ -35,12 +35,13 @@ const userSchema = new mongoose.Schema({
   },
     tokens: [
     {
-      token: { type: String, required: true }
+      token: { type: String, 
+              required: true
+               }
     }
   ],
    phoneNumber: {
     type: String,
-    unique: true,
    },
    city: {
     type: String,
