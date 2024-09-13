@@ -66,7 +66,7 @@ export const register = async (req, res) => {
       newUser: {
         email: newUser.email
       },
-      message: 'User created successfully. Please check your email to verify your account.',
+      message: `User created successfully. Your verification link has been sent to ${email}`,
     });
   } catch (error) {
     console.error(error);
@@ -74,47 +74,52 @@ export const register = async (req, res) => {
   }
 };
 
-export const login = async(req, res) => {
+export const login = async (req, res) => {
   try {
-    const {email, password} = req.body;
-    if(!email ||!password) {
-        return errorResMsg(res, 400, 'Please Enter your email address and password');
-    }
-    const user = await checkExistingUser(email);
-    if(!user) {
-        return errorResMsg(res, 401, 'Invalid email or password');
+    const { email, password } = req.body;
+    
+    // Ensure both email and password are provided
+    if (!email || !password) {
+      return errorResMsg(res, 400, 'Please enter your email address and password');
     }
 
-     // Check if the email is verified
-     if (user.emailStatus === false) {
+    // Check if user exists
+    const user = await checkExistingUser(email);
+    if (!user) {
+      return errorResMsg(res, 401, 'Invalid email or password');
+    }
+
+    // Check if the email is verified
+    if (user.emailStatus === false) {
       return errorResMsg(res, 401, 'Please verify your email to log in.');
     }
+
     // Check if the password is correct
-    const passwordMatch = await checkExistingPassword(password, user);
-  
+    const passwordMatch = await checkExistingPassword(password, user.password);
     if (!passwordMatch) {
-      return errorResMsg(res, 400, 'Password Does Not Match');
+      return errorResMsg(res, 400, 'Password does not match');
     }
 
+    // Generate a new token
     const token = user.generateAuthToken();
 
-      // Add the token to the user's tokens array and save it
-    user.tokens = user.tokens.concat({ token });
+    // Clear previous tokens and store only the new one
+    user.tokens = [{ token }];
     await user.save();
 
     return successResMsg(res, 200, {
       success: true,
       data: {
-        token
+        token,
       },
     });
-
+    
   } catch (error) {
     console.error(error);
-    return errorResMsg(res, 500, "Server Error");
-    
+    return errorResMsg(res, 500, 'Server error');
   }
 };
+
 
 export const verifyEmail = async (req, res) => {
   try {
@@ -186,20 +191,21 @@ export const updateProfile = async (req, res) => {
       firstName, 
       lastName, 
       phoneNumber, 
-      city,
+      address,
       companyName, 
       occupation, 
       industry, 
       country, 
-      state, 
+      state,
+      city, 
       zipCode, 
-      address 
+      companyAddress 
     } = req.body;
     const companyLogo = req.file;
 
     // Check required fields
     if (
-      !firstName || !lastName || !phoneNumber || !city || !address ||
+      !firstName || !lastName || !phoneNumber || ! address || !city || !companyAddress ||
       !companyName || !occupation || !industry || !country || !state || !zipCode
     ) {
       return errorResMsg(res, 400, 'Please fill in the required fields');
@@ -217,7 +223,7 @@ export const updateProfile = async (req, res) => {
       firstName, 
       lastName, 
       phoneNumber, 
-      city
+      address
     }, { new: true });
 
     if (!updatedUser) {
@@ -235,7 +241,8 @@ export const updateProfile = async (req, res) => {
         country, 
         state, 
         zipCode, 
-        address
+        city,
+        companyAddress
       },
       { new: true, upsert: true } // Create a new company if it doesn't exist
     );
@@ -245,7 +252,6 @@ export const updateProfile = async (req, res) => {
       firstName: updatedUser.firstName,
       lastName: updatedUser.lastName,
       phoneNumber: updatedUser.phoneNumber,
-      city: updatedUser.city,
       address: updatedUser.address,
       companyName: updatedCompany.companyName,
       companyLogo: updatedCompany.companyLogo,
@@ -253,7 +259,8 @@ export const updateProfile = async (req, res) => {
       industry: updatedCompany.industry,
       country: updatedCompany.country,
       state: updatedCompany.state,
-      zipCode: updatedCompany.zipCode
+      zipCode: updatedCompany.zipCode,
+      companyAddress: updatedCompany.companyAddress
     };
 
     return successResMsg(res, 200, {
@@ -400,6 +407,49 @@ export const logout = async (req, res) => {
       success: true,
       message: 'Logged out successfully',
     });
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { password, newPassword, confirmPassword } = req.body;
+    
+    // Ensure all fields are provided
+    if (!password || !newPassword || !confirmPassword) {
+      return errorResMsg(res, 400, 'Please provide all required fields');
+    }
+
+    // Ensure the new password and confirm password match
+    if (newPassword !== confirmPassword) {
+      return errorResMsg(res, 400, 'New password and confirmation do not match');
+    }
+
+    // Ensure req.user exists
+    const user = req.user; 
+    if (!user) {
+      return errorResMsg(res, 401, 'User not authenticated');
+    }
+
+    // Check if the old password matches the current password in the database
+    const isMatch = await checkExistingPassword(password, user.password);
+    if (!isMatch) {
+      return errorResMsg(res, 401, 'Invalid old password');
+    }
+
+    // Set the new password (it will be hashed by the 'pre' save hook)
+    user.password = newPassword;
+    
+    // Save the user with the new password
+    await user.save();
+
+    return successResMsg(res, 200, {
+      success: true,
+      message: 'Password changed successfully',
+    });
+
   } catch (error) {
     console.error(error);
     return errorResMsg(res, 500, 'Server Error');

@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
    phoneNumber: {
     type: String,
    },
-   city: {
+   address: {
     type: String,
    },
    registrationDate: {
