@@ -115,3 +115,143 @@ export const getClientById = async (req, res) => {
     return errorResMsg(res, 500, 'Server Error');
   }
 };
+
+export const updateClient = async (req, res) => {
+  try {
+    const user = req.user;
+    const clientId = req.params.clientId;
+    const { businessName, clientIndustry,country, email, city, zipCode, address } = req.body;
+    
+    if (!user) {
+      return errorResMsg(res, 401, 'User not found');
+    }
+    
+    const client = await Client.findOneAndUpdate({ _id: clientId, user: user._id }, {businessName, clientIndustry, email,country, city, zipCode, address }, { new: true });
+    
+    if (!client) {
+      return errorResMsg(res, 404, 'Client not found');
+    }
+    
+    return successResMsg(res, 200, {
+      success: true,
+      client
+    });
+    
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+    
+  }
+};
+
+export const searchClient = async (req, res) => {
+  try {
+    const { user } = req;
+    const { search: searchQuery } = req.query;
+    
+    if (!user) {
+      return errorResMsg(res, 401, 'User not found');
+    }
+
+    if (!searchQuery) {
+      return errorResMsg(res, 400, 'Search query is required');
+    }
+
+    const clients = await Client.find({
+      businessName: { $regex: searchQuery, $options: 'i' }, 
+      user: user._id
+    }).exec();
+
+    if (clients.length === 0) {
+      return successResMsg(res, 200, {
+        success: true,
+        message: 'No clients found',
+        clients: []
+      });
+    }
+
+    return successResMsg(res, 200, {
+      success: true,
+      clients
+    });
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+  }
+};
+
+export const filterClients = async (req, res) => {
+  try {
+    const { user } = req;
+    const { search, industry, city } = req.query; // Multiple filters
+    
+    if (!user) {
+      return errorResMsg(res, 401, 'User not found');
+    }
+
+    // Construct the filter object dynamically based on query parameters
+    let filter = { user: user._id };
+
+    if (search) {
+      filter.businessName = { $regex: search, $options: 'i' };
+    }
+    
+    if (industry) {
+      filter.clientIndustry = industry; // Exact match for industry
+    }
+
+    if (city) {
+      filter.city = { $regex: city, $options: 'i' }; // Partial match for city
+    }
+
+    const clients = await Client.find(filter).exec();
+
+    if (clients.length === 0) {
+      return successResMsg(res, 200, {
+        success: true,
+        message: 'No clients found',
+        clients: []
+      });
+    }
+
+    return successResMsg(res, 200, {
+      success: true,
+      clients
+    });
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+  }
+};
+
+export const deleteClient = async (req, res) => {
+  try {
+    const { user } = req;
+    const { clientId } = req.params;
+
+    if (!user) {
+      return errorResMsg(res, 401, 'User not found');
+    }
+
+    if (!clientId) {
+      return errorResMsg(res, 400, 'Client ID is required');
+    }
+
+    // Find and delete the client belonging to the logged-in user
+    const client = await Client.findOneAndDelete({ _id: clientId, user: user._id });
+
+    if (!client) {
+      return errorResMsg(res, 404, 'Client not found or not authorized to delete this client');
+    }
+
+    return successResMsg(res, 200, {
+      success: true,
+      message: 'Client deleted successfully',
+    });
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+  }
+};
+
+
