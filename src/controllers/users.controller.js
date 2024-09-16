@@ -164,13 +164,11 @@ export const getProfile = async(req, res) => {
         return errorResMsg(res, 401, 'User not found');
     }
     const userProfile = {
-      firstName: user.firstName,
-      lastName: user.lastName,
+      name: `${user.firstName} ${user.lastName}`,
       phoneNumber: user.phoneNumber,
-      city: user.city,
       address: user.address,
       registrationDate: user.registrationDate,
-      profilePicture: user.profilePicture
+      // profilePicture: user.profilePicture
     }
     return successResMsg(res, 200, {
         success: true,
