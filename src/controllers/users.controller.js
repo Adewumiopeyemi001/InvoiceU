@@ -443,6 +443,30 @@ export const changePassword = async (req, res) => {
     // Save the user with the new password
     await user.save();
 
+    const currentFilePath = fileURLToPath(import.meta.url);
+    const currentDir = dirname(currentFilePath);
+    const templatePath = path.join(currentDir, '../public/emails/changePassword.ejs');
+
+    await ejs.renderFile(
+      templatePath,
+      {
+        title: "",
+        // body: `Paasword Changed`,
+        firstName: user.firstName
+      },
+      async (err, data) => {
+        if (err) {
+          console.error('EJS render error:', err);
+          return errorResMsg(res, 500, "Error rendering email template");
+        }
+        await emailSenderTemplate(
+          data,
+          'Your Password Has Been Successfully Changed',
+          user.email
+        );
+      }
+    );
+
     return successResMsg(res, 200, {
       success: true,
       message: 'Password changed successfully',
