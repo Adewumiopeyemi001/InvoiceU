@@ -4,12 +4,13 @@ const accountSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
+        required: true, // Ensure account is always linked to a user
     },
     accountType: {
         type: String,
         required: true,
     },
-    BankName: {
+    bankName: {
         type: String,
         required: true,
     },
@@ -20,12 +21,16 @@ const accountSchema = new mongoose.Schema({
     accountNumber: {
         type: String,
         required: true,
+        unique: true,
+        validate: {
+            validator: (value) => /^\d{10}$/.test(value), // Ensures exactly 10 digits
+            message: "Account number must be exactly 10 digits.",
+        },
     },
 },
-    {
-        timestamps: true,
-        versionKey: false,
-    }
-);
+{
+    timestamps: true,
+    versionKey: false,
+});
 
 export default mongoose.model("Account", accountSchema);
