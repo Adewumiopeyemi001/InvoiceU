@@ -34,10 +34,10 @@ export const addClient = async (req, res) => {
       return errorResMsg(res, 400, 'Please fill in the required fields');
     }
 
-    // Look up client by email or businessName
-    const existingClient = await Client.findOne({ businessName });
+    // Look for an existing client with the same businessName under the current user
+    const existingClient = await Client.findOne({ businessName, user: user._id });
     if (existingClient) {
-      return errorResMsg(res, 400, 'Client with the same business name already exists');
+      return errorResMsg(res, 400, 'You have already added this client');
     }
 
     // Create and save the new client

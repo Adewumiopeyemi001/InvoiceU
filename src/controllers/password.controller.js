@@ -1,4 +1,3 @@
-
 import User from "../models/users.model.js";
 import {errorResMsg, successResMsg} from '../lib/responses.js';
 import { fileURLToPath } from 'url';
