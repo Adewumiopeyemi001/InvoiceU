@@ -1,7 +1,9 @@
 import express from 'express';
-import {register, login, verifyEmail, getProfile, updateProfile, forgotPassword, resetPassword, logout, changePassword} from '../controllers/users.controller.js';
+import {register, login, verifyEmail, logout} from '../controllers/auth.controller.js';
 import { authenticateUser } from '../middlewares/auth.js';
 import upload from "../public/images/multer.js"
+import { changePassword, forgotPassword, resetPassword } from '../controllers/password.controller.js';
+import { createAccount, editProfile, getProfile } from '../controllers/user.controller.js';
 
 const router = express.Router();
 
@@ -195,7 +197,10 @@ router.get('/verify-email', verifyEmail);
  */
 
 router.get('/myprofile', authenticateUser, getProfile);
-router.put('/updateprofile', authenticateUser, upload.single("companyLogo"), updateProfile);
+router.put('/createaccount', authenticateUser, upload.single("companyLogo"), createAccount);
+// router.put('/editprofile', authenticateUser, upload.single("companyLogo"), editProfile);
+router.put('/editprofile', authenticateUser, upload.fields([{ name: 'companyLogo' }, { name: 'profilePicture' }]), editProfile);
+
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/logout', authenticateUser, logout);
