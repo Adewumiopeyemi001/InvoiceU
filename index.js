@@ -9,7 +9,7 @@ import { connectDB } from './src/config/db.js';
 import userRouter from './src/routes/users.route.js';
 import authRoutes from './src/routes/googleAuth.js';
 import clientRoutes from './src/routes/clients.route.js';
-import accountRoutes from './src/routes/account.route.js';
+// import accountRoutes from './src/routes/account.route.js';
 import passportSetup from './src/config/passport.js';
 
 dotenv.config();
@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
 app.use('/', userRouter);
 app.use('/', authRoutes);
 app.use('/', clientRoutes);
-app.use('/', accountRoutes);
+// app.use('/', accountRoutes);
 
 const server = app.listen(PORT, async () => {
   try {

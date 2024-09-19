@@ -50,11 +50,11 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
    },
-  //  profilePicture: {
-  //   type: String,
-  //   default:
-  //     "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
-  // },
+   profilePicture: {
+    type: String,
+    default:
+      "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+  },
   resetPasswordToken: {
     type: String,
   },
