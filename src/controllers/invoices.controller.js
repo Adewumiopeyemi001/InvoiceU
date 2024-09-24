@@ -3,6 +3,7 @@ import User from "../models/users.model.js";
 import Company from "../models/companys.model.js";
 import Invoice from "../models/invoices.model.js";
 import { errorResMsg, successResMsg } from "../lib/responses.js";
+// import { v4 as uuidv4 } from 'uuid';
 
 export const createInvoice = async (req, res) => {
     try {
@@ -36,8 +37,9 @@ export const createInvoice = async (req, res) => {
 
         // Create reference and invoice number using timestamp
         const timestamp = Date.now();
-        const reference = `INV_${timestamp}`;
-        const invoiceNumber = `#AB${timestamp}`;
+        const reference = `#AB${timestamp}`;
+        // const invoiceNumber = `#INV_${uuidv4()}`;
+        const invoiceNumber = `#INV_${Math.floor(Math.random() * 900000) + 100000}`;
 
         // Create new invoice (only store reference to the company, not the full details)
         const newInvoice = new Invoice({
