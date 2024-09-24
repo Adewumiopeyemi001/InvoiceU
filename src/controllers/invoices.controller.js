@@ -22,11 +22,11 @@ export const createInvoice = async (req, res) => {
             return errorResMsg(res, 401, 'User not found');
         }
 
-          // Fetch company data for the user and populate business details
-          const existingCompany = await Company.findOne({ user: user._id }).populate('companyName companyLogo industry occupation country city state zipCode companyAddress');
-          if (!existingCompany) {
-              return errorResMsg(res, 404, 'Company details not found');
-          }
+        // Fetch company data for the user
+        const existingCompany = await Company.findOne({ user: user._id });
+        if (!existingCompany) {
+            return errorResMsg(res, 404, 'Company details not found');
+        }
 
         // Fetch client data
         const existingClient = await Client.findOne({ user: user._id });
@@ -39,7 +39,7 @@ export const createInvoice = async (req, res) => {
         const reference = `INV_${timestamp}`;
         const invoiceNumber = `#AB${timestamp}`;
 
-        // Create new invoice
+        // Create new invoice (only store reference to the company, not the full details)
         const newInvoice = new Invoice({
             user: user._id,
             company: existingCompany._id,
@@ -56,11 +56,40 @@ export const createInvoice = async (req, res) => {
 
         await newInvoice.save();
 
+        // Return only the required fields in the response (no need to save company details in the invoice)
         return successResMsg(res, 201, {
             success: true,
             message: 'Invoice created successfully',
-            companyDetails: existingCompany, // Return all company details as part of the response
-            invoice: newInvoice,
+            companyDetails: {
+                companyName: existingCompany.companyName,
+                companyLogo: existingCompany.companyLogo,
+                industry: existingCompany.industry,
+                occupation: existingCompany.occupation,
+                country: existingCompany.country,
+                city: existingCompany.city,
+                state: existingCompany.state,
+                zipCode: existingCompany.zipCode,
+                companyAddress: existingCompany.companyAddress,
+            },
+            clientDetails: {
+                businessName: existingClient.businessName,
+                clientIndustry: existingClient.clientIndustry,
+                address: existingClient.address, 
+                // email: existingClient.email,
+                country: existingClient.country,
+                city: existingClient.city,
+                zipCode: existingClient.zipCode,
+            },
+            invoice: {
+                invoiceNumber,
+                issueDate,
+                dueDate,
+                totalAmount,
+                reference,
+                phoneNumber,
+                status,
+                items,
+            }
         });
     } catch (error) {
         console.error(error);
