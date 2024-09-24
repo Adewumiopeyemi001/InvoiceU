@@ -1,63 +1,49 @@
 import Client from "../models/clients.model.js";
 import User from "../models/users.model.js";
 import Company from "../models/companys.model.js";
+import Invoice from "../models/invoices.model.js";
 import { errorResMsg, successResMsg } from "../lib/responses.js";
 
 export const createInvoice = async (req, res) => {
     try {
-        // Fetch user, company, client, and account information
-        const { user, company, client } = req; // Assuming `req` is populated with authenticated data
-        const { items, issueDate, dueDate, totalAmount, phoneNumber, status, accountNumber } = req.body;
+        const { user } = req;
+        const { items, issueDate, dueDate, phoneNumber, status } = req.body;
 
-        // Generate reference and invoice number using the same timestamp
-        const timestamp = Date.now();
-        const reference = `INV_${timestamp}`;
-        const invoiceNumber = `#AB${timestamp}`;
+        // Calculate total amount
+        const totalAmount = items.map((item) => item.quantity * item.rate).reduce((acc, curr) => acc + curr, 0);
 
-        // Validate required fields
-        if (!items || !issueDate || !dueDate || !totalAmount || !phoneNumber || !accountNumber) {
+        if (!items || !issueDate || !dueDate || !totalAmount) {
             return errorResMsg(res, 400, 'All fields are required');
         }
 
-        // Check if user data exists
-        const existingUser = await User.findOne({ _id: user._id });
+        // Check if user exists
+        const existingUser = await User.findById(user._id);
         if (!existingUser) {
             return errorResMsg(res, 401, 'User not found');
         }
 
-        // Check if company data exists
-        const existingCompany = await Company.findOne({
-            user: user._id,
-            _id: company._id,
-        });
-        if (!existingCompany) {
-            return errorResMsg(res, 404, 'Company details not found');
-        }
+          // Fetch company data for the user and populate business details
+          const existingCompany = await Company.findOne({ user: user._id }).populate('companyName companyLogo industry occupation country city state zipCode companyAddress');
+          if (!existingCompany) {
+              return errorResMsg(res, 404, 'Company details not found');
+          }
 
-        // Check if client data exists
-        const existingClient = await Client.findOne({
-            user: user._id,
-            _id: client._id,
-        });
+        // Fetch client data
+        const existingClient = await Client.findOne({ user: user._id });
         if (!existingClient) {
-            return errorResMsg(res, 400, 'Please create a new client');
+            return errorResMsg(res, 400, 'Client details not found, please create a new client');
         }
 
-        // Check if account data exists
-        const existingAccount = await Account.findOne({
-            accountNumber,
-            user: user._id,
-        });
-        if (!existingAccount) {
-            return errorResMsg(res, 400, 'Please provide a valid account');
-        }
+        // Create reference and invoice number using timestamp
+        const timestamp = Date.now();
+        const reference = `INV_${timestamp}`;
+        const invoiceNumber = `#AB${timestamp}`;
 
         // Create new invoice
         const newInvoice = new Invoice({
             user: user._id,
-            company: company._id,
-            client: client._id,
-            accountNumber,
+            company: existingCompany._id,
+            client: existingClient._id,
             invoiceNumber,
             issueDate,
             dueDate,
@@ -73,6 +59,7 @@ export const createInvoice = async (req, res) => {
         return successResMsg(res, 201, {
             success: true,
             message: 'Invoice created successfully',
+            companyDetails: existingCompany, // Return all company details as part of the response
             invoice: newInvoice,
         });
     } catch (error) {

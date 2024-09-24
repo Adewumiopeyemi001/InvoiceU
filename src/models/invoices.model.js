@@ -29,15 +29,15 @@ const invoiceSchema = new mongoose.Schema({
         ref: "User",
         required: true, // Ensure invoice is always linked to a user
     },
-    client: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Client",
-        required: true, // Ensure invoice is always linked to a client
-    },
     company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Company",
         required: true, // Ensure invoice is always linked to a company
+    },
+    client: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Client",
+        required: true, // Ensure invoice is always linked to a client
     },
     issueDate: {
         type: Date,
@@ -64,7 +64,7 @@ const invoiceSchema = new mongoose.Schema({
 
     phoneNumber: {
         type: String,
-        required: true,
+        // required: true,
     },
     accountNumber: {
         type: mongoose.Schema.Types.ObjectId,
