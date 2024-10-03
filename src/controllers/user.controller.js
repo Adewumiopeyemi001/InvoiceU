@@ -5,57 +5,53 @@ import {errorResMsg, successResMsg} from '../lib/responses.js';
 import cloudinary from "../public/images/cloudinary.js";
 
 export const getProfile = async (req, res) => {
-    try {
-      const user = req.user;
-      if (!user) {
-        return errorResMsg(res, 401, 'User not found');
-      }
-  
-      // Find the company associated with the user
-      const company = await Company.findOne({ user: user._id });
-  
-      if (!company) {
-        return errorResMsg(res, 404, 'Company details not found');
-      }
-  
-      // Find all accounts associated with the user
-      const account = await Account.findOne({ user: user._id });
-      if (!account) {
-        return errorResMsg(res, 404, 'Account details not found');
-      }
-  
-      const userProfile = {
-        name: `${user.firstName} ${user.lastName}`,
-        phoneNumber: user.phoneNumber,
-        address: user.address,
-        registrationDate: user.registrationDate,
-        profilePicture: user.profilePicture,
-        companyName: company.companyName,
-        companyLogo: company.companyLogo,
-        occupation: company.occupation,
-        industry: company.industry,
-        country: company.country,
-        state: company.state,
-        city: company.city,
-        companyAddress: company.companyAddress,
-        accountType: account.accountType,
-        bankName: account.bankName,
-        accountName: account.accountName,
-        accountNumber: account.accountNumber,
-      };
-  
-      return successResMsg(res, 200, {
-        success: true,
-        user: userProfile,
-      });
-  
-    } catch (error) {
-      console.error(error);
-      return errorResMsg(res, 500, "Server Error");
+  try {
+    const user = req.user;
+    if (!user) {
+      return errorResMsg(res, 401, 'User not found');
     }
-  };
+
+    // Find the company associated with the user (if available)
+    const company = await Company.findOne({ user: user._id });
+
+    // Find all accounts associated with the user (if available)
+    const accounts = await Account.find({ user: user._id });
+
+    // Build the user profile based on available information
+    const userProfile = {
+      name: `${user.firstName} ${user.lastName}`,
+      phoneNumber: user.phoneNumber || null,
+      address: user.address || null,
+      registrationDate: user.registrationDate || null,
+      profilePicture: user.profilePicture || null,
+      companyName: company?.companyName || null,
+      companyLogo: company?.companyLogo || null,
+      occupation: company?.occupation || null,
+      industry: company?.industry || null,
+      country: company?.country || null,
+      state: company?.state || null,
+      city: company?.city || null,
+      companyAddress: company?.companyAddress || null,
+      accounts: accounts.map(account => ({
+        accountType: account.accountType || null,
+        bankName: account.bankName || null,
+        accountName: account.accountName || null,
+        accountNumber: account.accountNumber || null,
+      }))
+    };
+
+    return successResMsg(res, 200, {
+      success: true,
+      user: userProfile,
+    });
+
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, "Server Error");
+  }
+};
   
-  export const createAccount = async (req, res) => {
+export const createAccount = async (req, res) => {
     try {
       const user = req.user;
       const { 
@@ -162,11 +158,7 @@ export const editProfile = async (req, res) => {
         state,
         city, 
         zipCode, 
-        companyAddress,
-        accountType,
-        bankName,
-        accountName,
-        accountNumber
+        companyAddress
       } = req.body;
       
       const { companyLogo, profilePicture } = req.files || {};
@@ -225,16 +217,16 @@ export const editProfile = async (req, res) => {
         { new: true, upsert: true }
       );
   
-      let accountDetails = await Account.findOneAndUpdate(
-        { user: user._id },
-        {
-          accountType,
-          bankName,
-          accountName,
-          accountNumber
-        },
-        { new: true, upsert: true }
-      );
+      // let accountDetails = await Account.findOneAndUpdate(
+      //   { user: user._id },
+      //   {
+      //     accountType,
+      //     bankName,
+      //     accountName,
+      //     accountNumber
+      //   },
+      //   { new: true, upsert: true }
+      // );
   
       const filteredUser = {
         firstName: updatedUser.firstName,
@@ -250,10 +242,10 @@ export const editProfile = async (req, res) => {
         state: updatedCompany.state,
         zipCode: updatedCompany.zipCode,
         companyAddress: updatedCompany.companyAddress,
-        accountType: accountDetails.accountType,
-        bankName: accountDetails.bankName,
-        accountName: accountDetails.accountName,
-        accountNumber: accountDetails.accountNumber
+        // accountType: accountDetails.accountType,
+        // bankName: accountDetails.bankName,
+        // accountName: accountDetails.accountName,
+        // accountNumber: accountDetails.accountNumber
       };
   
       return successResMsg(res, 200, {
