@@ -64,17 +64,21 @@ const invoiceSchema = new mongoose.Schema({
 
     phoneNumber: {
         type: String,
-        // required: true,
+        // Optional, can be set by user
     },
-    accountNumber: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Account",
-        // required: true,
+    email: {
+        type: String,
+        // Optional, can be set by user
+    },
+    account: {
+        type: mongoose.Schema.Types.ObjectId, // Reference to Account schema
+        ref: "Account", // Link this to Account model
+        required: false // Not required, as not all invoices may include account details
     },
     status: {
         type: String,
-        enum: ["Pending", "Draft", "Completed"],
-        default: "Pending",
+        enum: ["Draft", "Completed"],
+        default: "Draft",
     },
 }, {
     timestamps: true,
@@ -82,3 +86,4 @@ const invoiceSchema = new mongoose.Schema({
 });
 
 export default mongoose.model("Invoice", invoiceSchema);
+

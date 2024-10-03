@@ -10,7 +10,7 @@ import userRouter from './src/routes/users.route.js';
 import authRoutes from './src/routes/googleAuth.js';
 import clientRoutes from './src/routes/clients.route.js';
 import invoiceRoutes from './src/routes/invoices.route.js';
-// import accountRoutes from './src/routes/account.route.js';
+import accountRoutes from './src/routes/account.route.js';
 import passportSetup from './src/config/passport.js';
 
 dotenv.config();
@@ -50,7 +50,7 @@ app.use('/', userRouter);
 app.use('/', authRoutes);
 app.use('/', clientRoutes);
 app.use('/', invoiceRoutes);
-// app.use('/', accountRoutes);
+app.use('/', accountRoutes);
 
 const server = app.listen(PORT, async () => {
   try {
