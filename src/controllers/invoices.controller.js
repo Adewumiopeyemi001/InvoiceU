@@ -98,3 +98,79 @@ export const createInvoice = async (req, res) => {
     }
 };
 
+export const getInvoiceById = async(req, res) => {
+    try {
+        const {user} = req;
+        const {invoiceId} = req.params;
+        
+        if (!user) {
+            return errorResMsg(res, 401, 'User not found');
+        }
+        
+        const invoice = await Invoice.findOne({_id: invoiceId, user: user._id})
+        
+        if (!invoice) {
+            return errorResMsg(res, 404, 'Invoice not found');
+        }
+        
+        return successResMsg(res, 200, {
+            success: true,
+            invoice,
+        });
+        
+    } catch (error) {
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
+        
+    }
+};
+
+export const getAllInvoices = async(req, res) => {
+    try {
+        const {user} = req;
+        const {page = 1, limit = 10, sortBy = 'issueDate', order = 'desc'} = req.query;
+        
+        if (!user) {
+            return errorResMsg(res, 401, 'User not found');
+        }
+        
+        const invoices = await Invoice.find({user: user._id})
+           .sort({[sortBy]: order})
+           .skip((page - 1) * limit)
+           .limit(limit)
+        
+        return successResMsg(res, 200, {
+            success: true,
+            invoices,
+        });
+        
+    } catch (error) {
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
+        
+    }
+};
+
+export const filterByStatus = async(req, res) => {
+    try {
+        const {user} = req;
+        const {status} = req.query;
+        
+        if (!user) {
+            return errorResMsg(res, 401, 'User not found');
+        }
+        
+        const invoices = await Invoice.find({user: user._id, status})
+        
+        return successResMsg(res, 200, {
+            success: true,
+            invoices,
+        });
+        
+    } catch (error) {
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
+        
+    }
+};
+
