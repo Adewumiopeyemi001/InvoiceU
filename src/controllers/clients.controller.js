@@ -254,4 +254,25 @@ export const deleteClient = async (req, res) => {
   }
 };
 
+export const totalClients = async(req, res) => {
+  try {
+    const {user} = req;
+    
+    if(!user) {
+      return errorResMsg(res, 401, 'User not found');
+    }
+
+    const totalClients = await Client.countDocuments({user: user._id});
+
+    return successResMsg(res, 200, {
+      success: true,
+      totalClients
+    });
+  } catch (error) {
+    console.error(error);
+    return errorResMsg(res, 500, 'Server Error');
+    
+  }
+};
+
 
