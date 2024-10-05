@@ -52,7 +52,7 @@ export const createInvoice = async (req, res) => {
             accountNumber = existingAccount.accountNumber;
         }
 
-        console.log(accountDetailsId, accountNumber);
+        // console.log(accountDetailsId, accountNumber);
 
         // Generate invoice number and reference
         const timestamp = Date.now();
@@ -138,10 +138,30 @@ export const getAllInvoices = async(req, res) => {
            .sort({[sortBy]: order})
            .skip((page - 1) * limit)
            .limit(limit)
+           .populate('client', 'businessName')
         
+             // If no invoices are found, return an empty array
+        if (invoices.length === 0) {
+            return successResMsg(res, 200, {
+                success: true,
+                message: 'No invoices found for the given status',
+                invoices: [], // Empty array
+            });
+        }
+
+        // Map over the invoices array to extract required details, including client business name
+        const invoiceDetails = invoices.map((invoice) => ({
+            reference: invoice.reference,
+            invoiceNumber: invoice.invoiceNumber,
+            issueDate: invoice.issueDate,
+            totalAmount: invoice.totalAmount,
+            status: invoice.status,
+            clientBusinessName: invoice.client.businessName, // Adding client business name here
+        }));
+
         return successResMsg(res, 200, {
             success: true,
-            invoices,
+            invoiceDetails,
         });
         
     } catch (error) {
@@ -151,26 +171,89 @@ export const getAllInvoices = async(req, res) => {
     }
 };
 
-export const filterByStatus = async(req, res) => {
+export const filterByStatus = async (req, res) => {
     try {
-        const {user} = req;
-        const {status} = req.query;
+        const { user } = req;
+        const { status } = req.query;
+
+        if (!user) {
+            return errorResMsg(res, 401, 'User not found');
+        }
+
+        // Find all invoices for the user with the given status and populate client details
+        const invoices = await Invoice.find({ user: user._id, status })
+            .populate('client', 'businessName'); // Populate the client field with the businessName only
+
+        // If no invoices are found, return an empty array
+        if (invoices.length === 0) {
+            return successResMsg(res, 200, {
+                success: true,
+                message: 'No invoices found for the given status',
+                invoices: [], // Empty array
+            });
+        }
+
+        // Map over the invoices array to extract required details, including client business name
+        const invoiceDetails = invoices.map((invoice) => ({
+            reference: invoice.reference,
+            invoiceNumber: invoice.invoiceNumber,
+            issueDate: invoice.issueDate,
+            totalAmount: invoice.totalAmount,
+            status: invoice.status,
+            clientBusinessName: invoice.client.businessName, // Adding client business name here
+        }));
+
+        // Return the array of invoice details
+        return successResMsg(res, 200, {
+            success: true,
+            invoiceDetails,
+        });
+
+    } catch (error) {
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
+    }
+};
+
+export const totalInvoice = async (req, res) => {
+    try {
+        const { user } = req;
+        if (!user) {
+            return errorResMsg(res, 401, 'User not found');
+        }
+
+        // Count the total number of invoices with status "Completed" for the user
+        const completedInvoicesCount = await Invoice.countDocuments({ user: user._id, status: 'Completed' });
+
+        return successResMsg(res, 200, {
+            success: true,
+            totalCompletedInvoices: completedInvoicesCount,
+        });
+
+    } catch (error) {
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
+    }
+};
+
+export const updateInvoice = async (req, res) => {
+    try {
+        const { user } = req;
+        const { invoiceId } = req.params;
+        const { status } = req.body;
+        const { clientId, items, issueDate, dueDate, phoneNumber, email, accountDetailsId } = req.body;
         
         if (!user) {
             return errorResMsg(res, 401, 'User not found');
         }
         
-        const invoices = await Invoice.find({user: user._id, status})
-        
-        return successResMsg(res, 200, {
-            success: true,
-            invoices,
-        });
-        
     } catch (error) {
-        console.error(error);
-        return errorResMsg(res, 500, 'Internal Server Error');
         
     }
 };
+
+
+
+
+
 

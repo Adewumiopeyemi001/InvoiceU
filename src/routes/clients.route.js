@@ -1,5 +1,5 @@
 import express from 'express';
-import { addClient, getClientById, getClientsByUserId, updateClient, searchClient, filterClients, deleteClient } from '../controllers/clients.controller.js';
+import { addClient, getClientById, getClientsByUserId, updateClient, searchClient, filterClients, deleteClient, totalClients } from '../controllers/clients.controller.js';
 import { authenticateUser } from '../middlewares/auth.js';
 const Router = express.Router();
 
@@ -10,6 +10,7 @@ Router.put('/updateclient/:clientId', authenticateUser, updateClient);
 Router.get('/client/search', authenticateUser, searchClient);
 Router.get('/client/filter', authenticateUser, filterClients);
 Router.delete('/client/:clientId', authenticateUser, deleteClient);
+Router.get('/clientcount', authenticateUser, totalClients);
 
 
 
