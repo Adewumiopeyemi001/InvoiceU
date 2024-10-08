@@ -4,6 +4,10 @@ import Company from "../models/companys.model.js";
 import Invoice from "../models/invoices.model.js";
 import { errorResMsg, successResMsg } from "../lib/responses.js";
 import accountsModel from "../models/accounts.model.js";
+import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
+// import PDFDocument from 'pdfkit';
 
 export const createInvoice = async (req, res) => {
     try {
@@ -240,20 +244,124 @@ export const updateInvoice = async (req, res) => {
     try {
         const { user } = req;
         const { invoiceId } = req.params;
-        const { status } = req.body;
-        const { clientId, items, issueDate, dueDate, phoneNumber, email, accountDetailsId } = req.body;
-        
+        const { status, clientId, items, issueDate, dueDate, phoneNumber, email, accountDetailsId } = req.body;
+
         if (!user) {
             return errorResMsg(res, 401, 'User not found');
         }
-        
+
+        // Find the invoice and ensure it's a draft before allowing updates
+        const existingInvoice = await Invoice.findOne({ _id: invoiceId, user: user._id });
+
+        if (!existingInvoice) {
+            return errorResMsg(res, 404, 'Invoice not found');
+        }
+
+        if (existingInvoice.status !== 'Draft') {
+            return errorResMsg(res, 400, 'Only invoices with status "Draft" can be updated');
+        }
+
+        // Fetch or validate account details if provided
+        let accountNumber = existingInvoice.accountNumber; // Retain existing account number
+        if (accountDetailsId) {
+            const existingAccount = await accountsModel.findOne({ _id: accountDetailsId });
+            if (!existingAccount) {
+                return errorResMsg(res, 404, 'Account details not found');
+            }
+            accountNumber = existingAccount.accountNumber;
+        }
+
+        // Update invoice details
+        existingInvoice.client = clientId || existingInvoice.client;
+        existingInvoice.items = items || existingInvoice.items;
+        existingInvoice.issueDate = issueDate || existingInvoice.issueDate;
+        existingInvoice.dueDate = dueDate || existingInvoice.dueDate;
+        existingInvoice.phoneNumber = phoneNumber || existingInvoice.phoneNumber;
+        existingInvoice.email = email || existingInvoice.email;
+        existingInvoice.account = accountDetailsId ? accountDetailsId : existingInvoice.account;
+        existingInvoice.status = status || existingInvoice.status;
+
+        await existingInvoice.save();
+
+        return successResMsg(res, 200, {
+            success: true,
+            message: 'Invoice updated successfully',
+            invoice: existingInvoice
+        });
+
     } catch (error) {
-        
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
     }
 };
 
 
 
+export const downloadInvoice = async (req, res) => {
+    try {
+        const { user } = req;
+        const { invoiceId } = req.params;
+
+        // Find the invoice
+        const invoice = await Invoice.findOne({ _id: invoiceId, user: user._id })
+            .populate('client', 'businessName address clientIndustry country')
+            .populate('company', 'companyName companyAddress companyLogo occupation')
+            .populate('account', 'accountNumber');
+        console.log(invoice);
+        
+        if (!invoice) {
+            return errorResMsg(res, 404, 'Invoice not found');
+        }
+
+        // Create the invoices directory if it doesn't exist
+        // const invoicesDir = path.join(__dirname, '../invoices');
+        const invoicesDir = path.resolve('invoices');
+        if (!fs.existsSync(invoicesDir)) {
+            fs.mkdirSync(invoicesDir, { recursive: true });
+        }
+
+        // Define the file path
+        const filePath = path.join(invoicesDir, `invoice_${invoice.invoiceNumber}.pdf`);
+
+        // Create a new PDF document
+        const doc = new PDFDocument();
+
+        // Pipe the PDF into the file
+        doc.pipe(fs.createWriteStream(filePath));
+
+        // Add invoice details to the PDF
+        doc.fontSize(20).text(`Invoice: ${invoice.invoiceNumber}`, { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(16).text(`Business: ${invoice.company.companyName}`, { align: 'left' });
+        doc.text(`Address: ${invoice.company.companyAddress}`, { align: 'left' });
+        doc.moveDown();
+        doc.text(`Client: ${invoice.client.businessName}`, { align: 'left' });
+        doc.text(`Client Address: ${invoice.client.address}`, { align: 'left' });
+        doc.moveDown();
+
+        // Add items
+        doc.text(`Items:`);
+        invoice.items.forEach((item, index) => {
+            doc.text(`${index + 1}. ${item.description} - ${item.quantity} x ${item.rate}`, { align: 'left' });
+        });
+
+        doc.moveDown();
+        doc.text(`Total Amount: $${invoice.totalAmount}`, { align: 'left' });
+        if (invoice.account) {
+            doc.text(`Account Number: ${invoice.account.accountNumber}`, { align: 'left' });
+        }
+
+        // Finalize the PDF file
+        doc.end();
+
+        // Send the PDF file as a response
+        res.download(filePath, `invoice_${invoice.invoiceNumber}.pdf`);
+
+    } catch (error) {
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
+    }
+};
 
 
 
