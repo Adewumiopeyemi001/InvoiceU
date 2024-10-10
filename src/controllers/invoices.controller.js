@@ -4,10 +4,7 @@ import Company from "../models/companys.model.js";
 import Invoice from "../models/invoices.model.js";
 import { errorResMsg, successResMsg } from "../lib/responses.js";
 import accountsModel from "../models/accounts.model.js";
-import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
+import { generateInvoicePDF } from "../lib/generatepdf.js";
 // import PDFDocument from 'pdfkit';
 
 export const createInvoice = async (req, res) => {
@@ -25,10 +22,16 @@ export const createInvoice = async (req, res) => {
         }
 
         // Calculate total amount
-        const totalAmount = items.reduce((acc, item) => acc + item.quantity * item.rate, 0);
-        if (totalAmount <= 0) {
+        const subTotal = items.reduce((acc, item) => acc + item.quantity * item.rate, 0);
+        if (subTotal <= 0) {
             return errorResMsg(res, 400, 'Invalid total amount');
         }
+
+       // Calculate 10% tax
+        const tax = subTotal * 0.10;
+
+// Calculate total amount
+        const total = subTotal + tax;
 
         // Validate user and company
         const existingUser = await User.findById(user._id);
@@ -73,7 +76,9 @@ export const createInvoice = async (req, res) => {
             invoiceNumber,
             issueDate,
             dueDate,
-            totalAmount,
+            subTotal,
+            tax,
+            total,
             reference,
             phoneNumber: phoneNumber || null,
             email: email || null,
@@ -90,7 +95,9 @@ export const createInvoice = async (req, res) => {
                 invoiceNumber,
                 issueDate,
                 dueDate,
-                totalAmount,
+                subTotal,
+                tax,
+                total,
                 reference,
                 phoneNumber,
                 status,
@@ -298,118 +305,145 @@ export const updateInvoice = async (req, res) => {
 
 
 
-export const downloadInvoice = async (req, res) => {
-    try {
-        const { user } = req;
-        const { invoiceId } = req.params;
+// export const downloadInvoice = async (req, res) => {
+//     try {
+//         const { user } = req;
+//         const { invoiceId } = req.params;
 
-        // Find the invoice
-        const invoice = await Invoice.findOne({ _id: invoiceId, user: user._id })
-            .populate('client', 'businessName address clientIndustry country')
-            .populate('company', 'companyName companyAddress companyLogo occupation')
-            .populate('account', 'accountNumber');
+//         // Find the invoice
+//         const invoice = await Invoice.findOne({ _id: invoiceId, user: user._id })
+//             .populate('client', 'businessName address clientIndustry country')
+//             .populate('company', 'companyName companyAddress companyLogo occupation')
+//             .populate('account', 'accountNumber');
 
-        if (!invoice) {
-            return errorResMsg(res, 404, 'Invoice not found');
-        }
+//         if (!invoice) {
+//             return errorResMsg(res, 404, 'Invoice not found');
+//         }
 
-        // Create the invoices directory if it doesn't exist
-        const invoicesDir = path.resolve('invoices');
-        if (!fs.existsSync(invoicesDir)) {
-            fs.mkdirSync(invoicesDir, { recursive: true });
-        }
+//         // Create the invoices directory if it doesn't exist
+//         const invoicesDir = path.resolve('invoices');
+//         if (!fs.existsSync(invoicesDir)) {
+//             fs.mkdirSync(invoicesDir, { recursive: true });
+//         }
 
-        // Define the file path
-        // const filePath = path.join(invoicesDir, `invoice_${invoice.invoiceNumber}.pdf`);
+//         // Define the file path
+//         // const filePath = path.join(invoicesDir, `invoice_${invoice.invoiceNumber}.pdf`);
 
-        const sanitizedInvoiceNumber = invoice.invoiceNumber.replace(/[#]/g, ''); // Replace # with nothing
-        const filePath = path.join(invoicesDir, `invoice_${sanitizedInvoiceNumber}.pdf`);
+//         const sanitizedInvoiceNumber = invoice.invoiceNumber.replace(/[#]/g, ''); // Replace # with nothing
+//         const filePath = path.join(invoicesDir, `invoice_${sanitizedInvoiceNumber}.pdf`);
 
-        // Create a new PDF document
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+//         // Create a new PDF document
+//         const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-        // Pipe the PDF into the file
-        doc.pipe(fs.createWriteStream(filePath));
+//         // Pipe the PDF into the file
+//         doc.pipe(fs.createWriteStream(filePath));
 
-        // Download the company logo if it's a URL and save it temporarily
-        const logoPath = path.resolve('temp', `logo_${invoice.company._id}.png`);
-        await downloadImage(invoice.company.companyLogo, logoPath);
+//         // Download the company logo if it's a URL and save it temporarily
+//         const logoPath = path.resolve('temp', `logo_${invoice.company._id}.png`);
+//         await downloadImage(invoice.company.companyLogo, logoPath);
 
-        // Header - Add the downloaded logo and company details
-        doc.image(logoPath, { width: 50, align: 'center' });
-        doc.fontSize(20).text(invoice.company.companyName, { align: 'center' });
-        doc.fontSize(10).text(`Business address\n${invoice.company.companyAddress}\nTAX ID ${invoice.company.taxId}`, { align: 'center' });
-        doc.moveDown();
+//         // Header - Add the downloaded logo and company details
+//         doc.image(logoPath, { width: 50, align: 'center' });
+//         doc.fontSize(20).text(invoice.company.companyName, { align: 'center' });
+//         doc.fontSize(10).text(`Business address\n${invoice.company.companyAddress}\nTAX ID ${invoice.company.taxId}`, { align: 'center' });
+//         doc.moveDown();
 
-        // Billing information
-        doc.fontSize(12).text(`Billed to:\n${invoice.client.businessName}\n${invoice.client.address}\n${invoice.client.country}`, { align: 'left' });
-        doc.moveDown();
+//         // Billing information
+//         doc.fontSize(12).text(`Billed to:\n${invoice.client.businessName}\n${invoice.client.address}\n${invoice.client.country}`, { align: 'left' });
+//         doc.moveDown();
 
-        // Invoice details
-        doc.text(`Invoice Date: ${invoice.invoiceDate}`);
-        doc.text(`Due Date: ${invoice.dueDate}`);
-        doc.text(`Invoice Number: ${invoice.invoiceNumber}`);
-        doc.moveDown();
+//         // Invoice details
+//         doc.text(`Invoice Date: ${invoice.invoiceDate}`);
+//         doc.text(`Due Date: ${invoice.dueDate}`);
+//         doc.text(`Invoice Number: ${invoice.invoiceNumber}`);
+//         doc.moveDown();
 
-        // Items table
-        doc.text('Item description', { continued: true });
-        doc.text('Qty', { align: 'right', continued: true });
-        doc.text('Rate', { align: 'right', continued: true });
-        doc.text('Amount', { align: 'right' });
-        invoice.items.forEach(item => {
-            doc.text(item.description, { continued: true });
-            doc.text(item.quantity, { align: 'right', continued: true });
-            doc.text(item.rate.toFixed(2), { align: 'right', continued: true });
-            doc.text((item.rate * item.quantity).toFixed(2), { align: 'right' });
-        });
+//         // Items table
+//         doc.text('Item description', { continued: true });
+//         doc.text('Qty', { align: 'right', continued: true });
+//         doc.text('Rate', { align: 'right', continued: true });
+//         doc.text('Amount', { align: 'right' });
+//         invoice.items.forEach(item => {
+//             doc.text(item.description, { continued: true });
+//             doc.text(item.quantity, { align: 'right', continued: true });
+//             doc.text(item.rate.toFixed(2), { align: 'right', continued: true });
+//             doc.text((item.rate * item.quantity).toFixed(2), { align: 'right' });
+//         });
 
-        // Total calculation
-        const subtotal = invoice.items.reduce((sum, item) => sum + (item.rate * item.quantity), 0);
-        const tax = subtotal * 0.1; // Assuming 10% tax
-        const total = subtotal + tax;
+//         // Total calculation
+//         const subtotal = invoice.items.reduce((sum, item) => sum + (item.rate * item.quantity), 0);
+//         const tax = subtotal * 0.1; // Assuming 10% tax
+//         const total = subtotal + tax;
 
-        doc.moveDown();
-        doc.text(`Subtotal: $${subtotal.toFixed(2)}`);
-        doc.text(`Tax (10%): $${tax.toFixed(2)}`);
-        doc.text(`Total: $${total.toFixed(2)}`, { fontSize: 16, underline: true });
+//         doc.moveDown();
+//         doc.text(`Subtotal: $${subtotal.toFixed(2)}`);
+//         doc.text(`Tax (10%): $${tax.toFixed(2)}`);
+//         doc.text(`Total: $${total.toFixed(2)}`, { fontSize: 16, underline: true });
 
-        // Total Due Section
-        doc.moveDown();
-        doc.fontSize(14).text(`Total due: USD ${total.toFixed(2)}`, { align: 'center' });
-        doc.fontSize(10).text(`USD ${numToWords(total)} Only.`, { align: 'center' });
+//         // Total Due Section
+//         doc.moveDown();
+//         doc.fontSize(14).text(`Total due: USD ${total.toFixed(2)}`, { align: 'center' });
+//         doc.fontSize(10).text(`USD ${numToWords(total)} Only.`, { align: 'center' });
 
-        // Finalize the PDF file
-        doc.end();
+//         // Finalize the PDF file
+//         doc.end();
 
-        // Send the PDF file as a response
-        res.download(filePath, `invoice_${invoice.invoiceNumber}.pdf`);
+//         // Send the PDF file as a response
+//         res.download(filePath, `invoice_${invoice.invoiceNumber}.pdf`);
 
-        // Clean up the temporary logo file
-        fs.unlinkSync(logoPath);
+//         // Clean up the temporary logo file
+//         fs.unlinkSync(logoPath);
 
-    } catch (error) {
-        console.error(error);
-        return errorResMsg(res, 500, 'Internal Server Error');
-    }
-};
+//     } catch (error) {
+//         console.error(error);
+//         return errorResMsg(res, 500, 'Internal Server Error');
+//     }
+// };
 
 // Function to download the image from the URL
-const downloadImage = async (url, filepath) => {
-    const response = await axios({
-        url,
-        responseType: 'stream',
-    });
-    return new Promise((resolve, reject) => {
-        response.data.pipe(fs.createWriteStream(filepath))
-            .on('finish', () => resolve())
-            .on('error', e => reject(e));
-    });
-};
+// const downloadImage = async (url, filepath) => {
+//     const response = await axios({
+//         url,
+//         responseType: 'stream',
+//     });
+//     return new Promise((resolve, reject) => {
+//         response.data.pipe(fs.createWriteStream(filepath))
+//             .on('finish', () => resolve())
+//             .on('error', e => reject(e));
+//     });
+// };
 
 // Function to convert numbers to words (e.g., 4950 -> "Four Thousand Nine Hundred Fifty")
-function numToWords(num) {
-    // Implementation to convert number to words
-}
+// function numToWords(num) {
+//     // Implementation to convert number to words
+// }
 
+export const downloadInvoice = async (req, res) => {
+     try {
+        const { user } = req;
 
+        const { invoiceId } = req.params;
+
+        if(!user) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+        
+        // Fetch the invoice and populate related documents (client, company, and account)
+        const invoice = await Invoice.findById(invoiceId)
+            .populate('client')
+            .populate('company')
+            .populate('account');
+        
+        if (!invoice) {
+            return res.status(404).json({ message: 'Invoice not found' });
+        }
+
+        // Generate and download the PDF
+        const filePath = await generateInvoicePDF(invoice);
+        res.download(filePath, `invoice_${invoice.invoiceNumber}.pdf`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
 

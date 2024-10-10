@@ -47,7 +47,15 @@ const invoiceSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
-    totalAmount: {
+    subTotal: {
+        type: Number,
+        required: true,
+    },
+    tax : {
+        type: Number,
+        required: true,
+    },
+    total : {
         type: Number,
         required: true,
     },
