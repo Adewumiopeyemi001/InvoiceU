@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header img {
+            width: 70px;
+            height: 70px;
+        }
+        .company-info, .client-info {
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .total {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .thank-you {
+            margin-top: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="<%= logoUrl %>" alt="Company Logo">
+        <div class="company-info">
+            <h2><%= company.companyName %></h2>
+            <p><%= company.companyAddress %>, <%= company.zipCode %></p>
+            <p>TAX ID: <%= company.taxId %></p>
+        </div>
+    </div>
+
+    <div class="client-info">
+        <h3>Billed To:</h3>
+        <p><%= client.businessName %></p>
+        <p><%= client.address %></p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item Description</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% items.forEach(function(item) { %>
+                <tr>
+                    <td><%= item.description %></td>
+                    <td><%= item.quantity %></td>
+                    <td>$<%= item.rate.toFixed(2) %></td>
+                    <td>$<%= (item.quantity * item.rate).toFixed(2) %></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+    <div class="total">
+        <p>Subtotal: $<%= (subtotal ? subtotal.toFixed(2) : '0.00') %></p>
+        <p>Tax (10%): $<%= (tax ? tax.toFixed(2) : '0.00') %></p>
+        <p>Total: $<%= (total ? total.toFixed(2) : '0.00') %></p>
+    </div>
+
+    <div class="thank-you">
+        <p>Thank you for your business!</p>
+    </div>
+</body>
+</html>

@@ -445,31 +445,52 @@ export const deleteInvoice = async(req, res) => {
 // }
 
 export const downloadInvoice = async (req, res) => {
-     try {
+    try {
         const { user } = req;
-
         const { invoiceId } = req.params;
 
-        if(!user) {
+        if (!user) {
             return res.status(401).json({ message: 'User not authenticated' });
         }
-        
-        // Fetch the invoice and populate related documents (client, company, and account)
+
+        // Fetch the invoice and populate related fields
         const invoice = await Invoice.findById(invoiceId)
             .populate('client')
             .populate('company')
             .populate('account');
-        
+
         if (!invoice) {
             return res.status(404).json({ message: 'Invoice not found' });
         }
 
-        // Generate and download the PDF
+        // Ensure the invoice has an invoice number and necessary data
+        if (!invoice.invoiceNumber) {
+            return res.status(400).json({ message: 'Invoice number missing' });
+        }
+
+        // Generate PDF
         const filePath = await generateInvoicePDF(invoice);
-        res.download(filePath, `invoice_${invoice.invoiceNumber}.pdf`);
+
+        // Check if the filePath is valid
+        if (!filePath || typeof filePath !== 'string') {
+            console.error('PDF generation failed: filePath is invalid');
+            return res.status(500).json({ message: 'Failed to generate invoice PDF' });
+        }
+
+        // Log file path for debugging
+        console.log(`File generated at: ${filePath}`);
+
+        // Send file for download
+        res.download(filePath, `invoice_${invoice.invoiceNumber}.pdf`, (err) => {
+            if (err) {
+                console.error('Error downloading file:', err);
+                res.status(500).json({ message: 'Error downloading file' });
+            }
+        });
     } catch (err) {
-        console.error(err);
+        console.error('Server error:', err);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
 
