@@ -303,6 +303,32 @@ export const updateInvoice = async (req, res) => {
     }
 };
 
+export const deleteInvoice = async(req, res) => {
+    try {
+        const {user} = req;
+        const {invoiceId} = req.params;
+        
+        if (!user) {
+            return errorResMsg(res, 401, 'User not found');
+        }
+        
+        const invoice = await Invoice.findOneAndDelete({ _id: invoiceId, user: user._id });
+        
+        if (!invoice) {
+            return errorResMsg(res, 404, 'Invoice not found');
+        }
+        
+        return successResMsg(res, 200, {
+            success: true,
+            message: 'Invoice deleted successfully',
+        });
+    } catch (error) {
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
+        
+    }
+};
+
 
 
 // export const downloadInvoice = async (req, res) => {

@@ -19,7 +19,7 @@ const itemSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: true,
+        // required: true,
     }
 }, { _id: false });
 
