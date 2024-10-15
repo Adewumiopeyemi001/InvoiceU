@@ -1,5 +1,5 @@
 import express from 'express';
-import { createInvoice, downloadInvoice, filterByStatus, getAllInvoices, getInvoiceById, totalInvoice, updateInvoice } from '../controllers/invoices.controller.js';
+import { createInvoice, deleteInvoice, downloadInvoice, filterByStatus, getAllInvoices, getInvoiceById, totalInvoice, updateInvoice } from '../controllers/invoices.controller.js';
 import { authenticateUser } from '../middlewares/auth.js';
 const Router = express.Router();
 
@@ -8,8 +8,10 @@ Router.get('/getinvoice/:invoiceId', authenticateUser, getInvoiceById);
 Router.get('/getallinvoice', authenticateUser, getAllInvoices);
 Router.get('/filterbystatus', authenticateUser, filterByStatus);
 Router.get('/invoicecount', authenticateUser, totalInvoice);
-Router.put('/updateinvoice', authenticateUser, updateInvoice);
+Router.put('/updateinvoice/:invoiceId', authenticateUser, updateInvoice);
+Router.delete('/delete/:invoiceId', authenticateUser, deleteInvoice);
 
+// For downloading invoice in PDF format
 Router.get('/download/:invoiceId', authenticateUser, downloadInvoice);
 
 
