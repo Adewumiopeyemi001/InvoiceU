@@ -18,9 +18,27 @@
             width: 70px;
             height: 70px;
         }
-        .company-info, .client-info {
-            margin: 20px 0;
+        .company-logo img {
+            display: block; /* Ensure the image behaves as a block element */
+            margin: 0 auto; /* Center the image horizontally */
         }
+
+        .company-logo h2 {
+            margin-top: 5px; /* Adjust this value to reduce the gap */
+        }
+
+        .company-info, .client-info {
+            margin: 10px 0; /* Adjusted to reduce space between sections */
+        }
+
+        .company-info p, .client-info p {
+            margin: 5px 0; /* Reduce the space between lines in the paragraphs */
+        }
+
+        .company-info h3, .client-info h3 {
+            margin-bottom: 10px; /* Reduce the space after the heading */
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -34,6 +52,19 @@
         th {
             background-color: #f2f2f2;
         }
+        .date {
+            display: flex;
+            text-align: center;
+            flex-direction: row;
+            align-items: flex-start;
+            border-radius: 10px;
+            background-color: aqua;
+            color: white;
+            padding: 5px 10px;
+            font-weight: bold;
+            width: 300px;
+
+        }
         .total {
             font-weight: bold;
             font-size: 16px;
@@ -46,11 +77,13 @@
 </head>
 <body>
     <div class="header">
-        <img src="<%= logoUrl %>" alt="Company Logo">
+        <div class = "company-logo">
+            <img src="<%= logoUrl %>" alt="Company Logo">
+        <h2><%= company.companyName %></h2>
+        </div>
         <div class="company-info">
-            <h2><%= company.companyName %></h2>
-            <p><%= company.companyAddress %>, <%= company.zipCode %></p>
-            <p>TAX ID: <%= company.taxId %></p>
+            <p><%= company.companyAddress %></p>
+            <p><%= company.city %>, <%= company.state %> - <%= company.zipCode %></p>
         </div>
     </div>
 
@@ -58,8 +91,12 @@
         <h3>Billed To:</h3>
         <p><%= client.businessName %></p>
         <p><%= client.address %></p>
+        <p><%= client.city %>, <%= client.country %> - <%= client.zipCode %></p>
     </div>
-
+    <div class="date">
+        <p><%= issueDate %></p>
+        <p><%= dueDate %></p>
+    </div>
     <table>
         <thead>
             <tr>
