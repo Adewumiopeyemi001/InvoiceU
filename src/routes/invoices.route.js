@@ -1,5 +1,5 @@
 import express from 'express';
-import { createInvoice, deleteInvoice, downloadInvoice, filterByStatus, getAllInvoices, getInvoiceById, totalInvoice, updateInvoice } from '../controllers/invoices.controller.js';
+import { createInvoice, deleteInvoice, downloadInvoice, filterByStatus, getAllInvoices, getInvoiceById, shareInvoices, totalInvoice, updateInvoice } from '../controllers/invoices.controller.js';
 import { authenticateUser } from '../middlewares/auth.js';
 const Router = express.Router();
 
@@ -13,6 +13,7 @@ Router.delete('/delete/:invoiceId', authenticateUser, deleteInvoice);
 
 // For downloading invoice in PDF format
 Router.get('/download/:invoiceId', authenticateUser, downloadInvoice);
+Router.post('/share/:invoiceIds/:email', authenticateUser, shareInvoices);
 
 
 export default Router;

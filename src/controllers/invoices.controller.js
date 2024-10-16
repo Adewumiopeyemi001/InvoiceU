@@ -2,7 +2,13 @@ import Client from "../models/clients.model.js";
 import User from "../models/users.model.js";
 import Company from "../models/companys.model.js";
 import Invoice from "../models/invoices.model.js";
+import mongoose from 'mongoose';
 import { errorResMsg, successResMsg } from "../lib/responses.js";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
+import emailSenderTemplate from "../middlewares/email.js";
+import ejs from 'ejs';
 import accountsModel from "../models/accounts.model.js";
 import { generateInvoicePDF } from "../lib/generatepdf.js";
 // import PDFDocument from 'pdfkit';
@@ -329,121 +335,6 @@ export const deleteInvoice = async(req, res) => {
     }
 };
 
-
-
-// export const downloadInvoice = async (req, res) => {
-//     try {
-//         const { user } = req;
-//         const { invoiceId } = req.params;
-
-//         // Find the invoice
-//         const invoice = await Invoice.findOne({ _id: invoiceId, user: user._id })
-//             .populate('client', 'businessName address clientIndustry country')
-//             .populate('company', 'companyName companyAddress companyLogo occupation')
-//             .populate('account', 'accountNumber');
-
-//         if (!invoice) {
-//             return errorResMsg(res, 404, 'Invoice not found');
-//         }
-
-//         // Create the invoices directory if it doesn't exist
-//         const invoicesDir = path.resolve('invoices');
-//         if (!fs.existsSync(invoicesDir)) {
-//             fs.mkdirSync(invoicesDir, { recursive: true });
-//         }
-
-//         // Define the file path
-//         // const filePath = path.join(invoicesDir, `invoice_${invoice.invoiceNumber}.pdf`);
-
-//         const sanitizedInvoiceNumber = invoice.invoiceNumber.replace(/[#]/g, ''); // Replace # with nothing
-//         const filePath = path.join(invoicesDir, `invoice_${sanitizedInvoiceNumber}.pdf`);
-
-//         // Create a new PDF document
-//         const doc = new PDFDocument({ size: 'A4', margin: 50 });
-
-//         // Pipe the PDF into the file
-//         doc.pipe(fs.createWriteStream(filePath));
-
-//         // Download the company logo if it's a URL and save it temporarily
-//         const logoPath = path.resolve('temp', `logo_${invoice.company._id}.png`);
-//         await downloadImage(invoice.company.companyLogo, logoPath);
-
-//         // Header - Add the downloaded logo and company details
-//         doc.image(logoPath, { width: 50, align: 'center' });
-//         doc.fontSize(20).text(invoice.company.companyName, { align: 'center' });
-//         doc.fontSize(10).text(`Business address\n${invoice.company.companyAddress}\nTAX ID ${invoice.company.taxId}`, { align: 'center' });
-//         doc.moveDown();
-
-//         // Billing information
-//         doc.fontSize(12).text(`Billed to:\n${invoice.client.businessName}\n${invoice.client.address}\n${invoice.client.country}`, { align: 'left' });
-//         doc.moveDown();
-
-//         // Invoice details
-//         doc.text(`Invoice Date: ${invoice.invoiceDate}`);
-//         doc.text(`Due Date: ${invoice.dueDate}`);
-//         doc.text(`Invoice Number: ${invoice.invoiceNumber}`);
-//         doc.moveDown();
-
-//         // Items table
-//         doc.text('Item description', { continued: true });
-//         doc.text('Qty', { align: 'right', continued: true });
-//         doc.text('Rate', { align: 'right', continued: true });
-//         doc.text('Amount', { align: 'right' });
-//         invoice.items.forEach(item => {
-//             doc.text(item.description, { continued: true });
-//             doc.text(item.quantity, { align: 'right', continued: true });
-//             doc.text(item.rate.toFixed(2), { align: 'right', continued: true });
-//             doc.text((item.rate * item.quantity).toFixed(2), { align: 'right' });
-//         });
-
-//         // Total calculation
-//         const subtotal = invoice.items.reduce((sum, item) => sum + (item.rate * item.quantity), 0);
-//         const tax = subtotal * 0.1; // Assuming 10% tax
-//         const total = subtotal + tax;
-
-//         doc.moveDown();
-//         doc.text(`Subtotal: $${subtotal.toFixed(2)}`);
-//         doc.text(`Tax (10%): $${tax.toFixed(2)}`);
-//         doc.text(`Total: $${total.toFixed(2)}`, { fontSize: 16, underline: true });
-
-//         // Total Due Section
-//         doc.moveDown();
-//         doc.fontSize(14).text(`Total due: USD ${total.toFixed(2)}`, { align: 'center' });
-//         doc.fontSize(10).text(`USD ${numToWords(total)} Only.`, { align: 'center' });
-
-//         // Finalize the PDF file
-//         doc.end();
-
-//         // Send the PDF file as a response
-//         res.download(filePath, `invoice_${invoice.invoiceNumber}.pdf`);
-
-//         // Clean up the temporary logo file
-//         fs.unlinkSync(logoPath);
-
-//     } catch (error) {
-//         console.error(error);
-//         return errorResMsg(res, 500, 'Internal Server Error');
-//     }
-// };
-
-// Function to download the image from the URL
-// const downloadImage = async (url, filepath) => {
-//     const response = await axios({
-//         url,
-//         responseType: 'stream',
-//     });
-//     return new Promise((resolve, reject) => {
-//         response.data.pipe(fs.createWriteStream(filepath))
-//             .on('finish', () => resolve())
-//             .on('error', e => reject(e));
-//     });
-// };
-
-// Function to convert numbers to words (e.g., 4950 -> "Four Thousand Nine Hundred Fifty")
-// function numToWords(num) {
-//     // Implementation to convert number to words
-// }
-
 export const downloadInvoice = async (req, res) => {
     try {
         const { user } = req;
@@ -493,4 +384,150 @@ export const downloadInvoice = async (req, res) => {
     }
 };
 
+// export const shareInvoices = async(req, res) => {
+//     try {
+//         const { user } = req;
+//         const { invoiceIds } = req.params;
+        
+//         if (!user) {
+//             return errorResMsg(res, 401, 'User not found');
+//         }
+        
+//         // Validate invoice IDs
+//         const validInvoiceIds = invoiceIds.map(id => mongoose.Types.ObjectId(id)).filter(Boolean);
+        
+//         if (validInvoiceIds.length === 0) {
+//             return errorResMsg(res, 400, 'Invalid invoice IDs provided');
+//         }
+        
+//         // Fetch the invoices and populate related fields
+//         const invoices = await Invoice.find({ _id: { $in: validInvoiceIds }, user: user._id })
+//             .populate('client')
+//             .populate('company')
+//             .populate('account');
+            
+//         if (invoices.length === 0) {
+//             return errorResMsg(res, 404, 'No invoices found for the given IDs');
+//         }
+        
+//         // Generate PDFs for each invoice
+//         const pdfFiles = await Promise.all(invoices.map(invoice => generateInvoicePDF(invoice)));
+        
+//         // Check if any PDF generation failed
+//         if (pdfFiles.some(filePath => typeof filePath!=='string')) {
+//             console.error('PDF generation failed for some invoices');
+//             return errorResMsg(res, 500, 'Failed to generate invoice PDFs');
+//         }
+        
+//         // Log file paths for debugging
+//         console.log('Generated PDFs for:', pdfFiles.map(filePath => `File: ${filePath}`));
+        
+//         // Send file attachments for download
+//         res.status(200).json({
+//             success: true,
+//             message: 'PDF files generated successfully',
+//             files: pdfFiles.map(filePath => ({ filename: `invoice_${invoices.find(invoice => invoice._id.toString() === mongoose.Types.ObjectId(filePath).toString()).invoiceNumber}.pdf`, path: filePath })),
+//         });
+
+        
+//     } catch (error) {
+//         console.error('Server error:', error);
+//         return errorResMsg(res, 500, 'Server error');
+        
+//     }
+// };
+
+export const shareInvoices = async (req, res) => {
+    try {
+        const { user } = req;
+        const { invoiceIds, email } = req.params;
+        
+        if (!user) {
+            return errorResMsg(res, 401, 'User not found');
+        }
+
+        // Validate invoice IDs - assuming `invoiceIds` is a comma-separated string
+        const validInvoiceIds = invoiceIds
+            .split(',')  // Split by comma if multiple IDs are passed
+            .map(id => {
+                // Create ObjectId instances correctly
+                if (mongoose.Types.ObjectId.isValid(id)) {
+                    return new mongoose.Types.ObjectId(id);
+                }
+                return null;
+            })
+            .filter(Boolean);
+
+        if (validInvoiceIds.length === 0) {
+            return errorResMsg(res, 400, 'Invalid invoice IDs provided');
+        }
+
+        // Fetch the invoices and populate related fields
+        const invoices = await Invoice.find({ _id: { $in: validInvoiceIds }, user: user._id })
+            .populate('client')
+            .populate('company')
+            .populate('account');
+
+        if (invoices.length === 0) {
+            return errorResMsg(res, 404, 'No invoices found for the given IDs');
+        }
+
+        // Generate PDFs for each invoice
+        const pdfFiles = await Promise.all(invoices.map(invoice => generateInvoicePDF(invoice)));
+
+        // Check if any PDF generation failed
+        if (pdfFiles.some(filePath => typeof filePath !== 'string')) {
+            console.error('PDF generation failed for some invoices');
+            return errorResMsg(res, 500, 'Failed to generate invoice PDFs');
+        }
+
+        // Log file paths for debugging
+        console.log('Generated PDFs for:', pdfFiles);
+
+        // Optionally: Handle sharing logic (e.g., email, WhatsApp, etc.)
+        const currentFilePath = fileURLToPath(import.meta.url);
+        const currentDir = dirname(currentFilePath);
+        const templatePath = path.join(
+            currentDir,
+            '../public/emails/shareinvoice.ejs'
+        );
+
+        await ejs.renderFile(
+            templatePath,
+            {
+                title: 'Invoice sent successfully',
+                pdfFiles: pdfFiles,
+                firstName: user.firstName,
+                attachments: attachments
+            },
+            async (err, data) => {
+                if (err) {
+                    console.error('Error rendering email template:', err);
+                    return errorResMsg(res, 500, 'Error rendering email template');
+                }
+        
+                // Create an array of attachments
+                const attachments = pdfFiles.map((filePath, index) => ({
+                    invoiceNumber: invoices[index].invoiceNumber,
+                    path: filePath
+                }));
+        
+                await emailSenderTemplate(data, 'Invoice sent', email, attachments);
+            }
+        );
+        
+        res.status(200).json({
+            success: true,
+            message: 'PDF files generated successfully',
+            files: pdfFiles.map((filePath, index) => ({
+                filename: `invoice_${invoices[index].invoiceNumber}.pdf`,
+                path: filePath,
+            })),
+        });
+
+    } catch (error) {
+        console.error('Server error:', error);
+        return errorResMsg(res, 500, 'Server error');
+    }
+};
 

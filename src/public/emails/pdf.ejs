@@ -97,6 +97,10 @@
         <p><%= issueDate %></p>
         <p><%= dueDate %></p>
     </div>
+    <div>
+        <p><%= reference %></p>
+        <p><%= invoiceNumber %></p>
+    </div>
     <table>
         <thead>
             <tr>
@@ -122,6 +126,21 @@
         <p>Subtotal: $<%= (subtotal ? subtotal.toFixed(2) : '0.00') %></p>
         <p>Tax (10%): $<%= (tax ? tax.toFixed(2) : '0.00') %></p>
         <p>Total: $<%= (total ? total.toFixed(2) : '0.00') %></p>
+    </div>
+    <div>
+        <p> <%= totalInWords %> Only</p>
+    </div>
+    
+
+    <div>
+        <!-- <p><%= account.accountType %></p> -->
+        <p><%= account.bankName %></p>
+        <p><%= account.accountName %></p>
+        <p><%= account.accountNumber %></p>
+        <div>
+            <p><%= phoneNumber %>   <%= email %> </p>
+        </div>
+
     </div>
 
     <div class="thank-you">

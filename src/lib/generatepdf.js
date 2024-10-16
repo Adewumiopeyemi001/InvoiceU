@@ -3,6 +3,9 @@ import path from 'path';
 import puppeteer from 'puppeteer';
 import ejs from 'ejs';
 import fs from 'fs';
+import numberToWords from 'number-to-words'; // Import CommonJS module
+const { toWords } = numberToWords; // Destructure to get toWords function
+
 
 // Get __filename and __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
@@ -23,6 +26,9 @@ export const generateInvoicePDF = async (invoice) => {
         const formattedIssueDate = formatDate(invoice.issueDate);
         const formattedDueDate = formatDate(invoice.dueDate);
 
+        // Convert total amount to words
+        const totalInWords = toWords(invoice.total);
+
         const html = await ejs.renderFile(
             path.join(process.cwd(), 'src', 'public', 'emails', 'pdf.ejs'),
             {
@@ -33,8 +39,15 @@ export const generateInvoicePDF = async (invoice) => {
                 subtotal: invoice.subtotal,
                 tax: invoice.tax,
                 total: invoice.total,
-                issueDate: formattedIssueDate, // Pass formatted issue date
-                dueDate: formattedDueDate,     // Pass formatted due date
+                issueDate: formattedIssueDate,
+                dueDate: formattedDueDate,
+                reference: invoice.reference, // Pass reference number
+                invoiceNumber: invoice.invoiceNumber, // Pass reference number
+                currency: invoice.currency, // Pass currency
+                email: invoice.email, // Pass email
+                phoneNumber: invoice.phoneNumber, // Pass phone number
+                account: invoice.account, // Pass account details
+                totalInWords: totalInWords // Pass total amount in words
             }
         );
 
