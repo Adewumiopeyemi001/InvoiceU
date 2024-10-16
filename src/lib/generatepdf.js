@@ -3,44 +3,51 @@ import path from 'path';
 import puppeteer from 'puppeteer';
 import ejs from 'ejs';
 import fs from 'fs';
-import axios from 'axios';
+import numberToWords from 'number-to-words'; // Import CommonJS module
+const { toWords } = numberToWords; // Destructure to get toWords function
+
 
 // Get __filename and __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Function to generate the PDF
-const downloadImage = async (url, dest) => {
-    const writer = fs.createWriteStream(dest);
-    const response = await axios({
-        url,
-        method: 'GET',
-        responseType: 'stream',
-    });
-
-    response.data.pipe(writer);
-
-    return new Promise((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-    });
-};
-
 export const generateInvoicePDF = async (invoice) => {
     try {
-        // Use the Cloudinary URL for the logo
-        const logoUrl = 'https://res.cloudinary.com/dzjtxffsr/image/upload/v1727879464/wvmh6spnxrqv4vtfwuje.png'; // Update with your actual Cloudinary URL
+        // Retrieve the user's logo URL from the invoice object
+        const logoUrl = invoice.company.companyLogo;
+
+        // Function to format dates
+        const formatDate = (dateString) => {
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return new Intl.DateTimeFormat('en-US', options).format(new Date(dateString));
+        };
+
+        const formattedIssueDate = formatDate(invoice.issueDate);
+        const formattedDueDate = formatDate(invoice.dueDate);
+
+        // Convert total amount to words
+        const totalInWords = toWords(invoice.total);
 
         const html = await ejs.renderFile(
             path.join(process.cwd(), 'src', 'public', 'emails', 'pdf.ejs'),
             {
-                logoUrl: logoUrl,  // Use Cloudinary URL directly
+                logoUrl: logoUrl,
                 company: invoice.company,
                 client: invoice.client,
                 items: invoice.items,
                 subtotal: invoice.subtotal,
                 tax: invoice.tax,
                 total: invoice.total,
+                issueDate: formattedIssueDate,
+                dueDate: formattedDueDate,
+                reference: invoice.reference, // Pass reference number
+                invoiceNumber: invoice.invoiceNumber, // Pass reference number
+                currency: invoice.currency, // Pass currency
+                email: invoice.email, // Pass email
+                phoneNumber: invoice.phoneNumber, // Pass phone number
+                account: invoice.account, // Pass account details
+                totalInWords: totalInWords // Pass total amount in words
             }
         );
 
@@ -73,3 +80,4 @@ export const generateInvoicePDF = async (invoice) => {
         throw error;
     }
 };
+
