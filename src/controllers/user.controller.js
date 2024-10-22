@@ -140,9 +140,7 @@ export const createAccount = async (req, res) => {
       return errorResMsg(res, 500, "Server Error");
     }
   };
-
   
-
 export const editProfile = async (req, res) => {
     try {
       const user = req.user;
@@ -164,15 +162,6 @@ export const editProfile = async (req, res) => {
       const { companyLogo, profilePicture } = req.files || {};
       const companyLogoFile = companyLogo ? companyLogo[0] : null;
       const profilePictureFile = profilePicture ? profilePicture[0] : null;
-  
-      // Check required fields
-      // if (
-      //   !firstName || !lastName || !phoneNumber || !address || !city || !companyAddress ||
-      //   !companyName || !occupation || !industry || !country || !state || !zipCode ||
-      //   !accountType || !bankName || !accountName || !accountNumber
-      // ) {
-      //   return errorResMsg(res, 400, 'Please fill in the required fields');
-      // }
   
       let companyLogoUrl = null;
       let profilePictureUrl = null;
