@@ -195,10 +195,172 @@ router.get('/verify-email', verifyEmail);
  *                   type: string
  *                   example: "Server Error"
  */
-
 router.get('/myprofile', authenticateUser, getProfile);
+
+/**
+ * @swagger
+ * /createaccount:
+ *   put:
+ *     summary: Create or update a user's account and company details
+ *     description: This endpoint allows authenticated users to create or update their account details including personal information and company details. A company logo can be uploaded.
+ *     tags:
+ *       - Account
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: The user's first name
+ *                 example: "John"
+ *               lastName:
+ *                 type: string
+ *                 description: The user's last name
+ *                 example: "Doe"
+ *               phoneNumber:
+ *                 type: string
+ *                 description: The user's phone number
+ *                 example: "+1234567890"
+ *               address:
+ *                 type: string
+ *                 description: The user's residential address
+ *                 example: "123 Main St"
+ *               companyName:
+ *                 type: string
+ *                 description: The company's name
+ *                 example: "Tech Corp"
+ *               occupation:
+ *                 type: string
+ *                 description: The user's occupation
+ *                 example: "Software Developer"
+ *               industry:
+ *                 type: string
+ *                 description: The industry the company operates in
+ *                 example: "Technology"
+ *               country:
+ *                 type: string
+ *                 description: The country of the company
+ *                 example: "USA"
+ *               state:
+ *                 type: string
+ *                 description: The state where the company is located
+ *                 example: "California"
+ *               city:
+ *                 type: string
+ *                 description: The city where the company is located
+ *                 example: "San Francisco"
+ *               zipCode:
+ *                 type: string
+ *                 description: The zip code of the company's address
+ *                 example: "94105"
+ *               companyAddress:
+ *                 type: string
+ *                 description: The company's address
+ *                 example: "456 Market St"
+ *               companyLogo:
+ *                 type: string
+ *                 format: binary
+ *                 description: The company's logo file to be uploaded
+ *     responses:
+ *       200:
+ *         description: Account and company details updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     firstName:
+ *                       type: string
+ *                       example: "John"
+ *                     lastName:
+ *                       type: string
+ *                       example: "Doe"
+ *                     phoneNumber:
+ *                       type: string
+ *                       example: "+1234567890"
+ *                     address:
+ *                       type: string
+ *                       example: "123 Main St"
+ *                     companyName:
+ *                       type: string
+ *                       example: "Tech Corp"
+ *                     companyLogo:
+ *                       type: string
+ *                       example: "https://example.com/logo.png"
+ *                     occupation:
+ *                       type: string
+ *                       example: "Software Developer"
+ *                     industry:
+ *                       type: string
+ *                       example: "Technology"
+ *                     country:
+ *                       type: string
+ *                       example: "USA"
+ *                     state:
+ *                       type: string
+ *                       example: "California"
+ *                     city:
+ *                       type: string
+ *                       example: "San Francisco"
+ *                     zipCode:
+ *                       type: string
+ *                       example: "94105"
+ *                     companyAddress:
+ *                       type: string
+ *                       example: "456 Market St"
+ *       400:
+ *         description: Bad request. Missing required fields or logo file.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Please fill in the required fields"
+ *       404:
+ *         description: User not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "User not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Server Error"
+ */
 router.put('/createaccount', authenticateUser, upload.single("companyLogo"), createAccount);
-// router.put('/editprofile', authenticateUser, upload.single("companyLogo"), editProfile);
+
 router.put('/editprofile', authenticateUser, upload.fields([{ name: 'companyLogo' }, { name: 'profilePicture' }]), editProfile);
 
 router.post('/forgot-password', forgotPassword);

@@ -27,17 +27,23 @@ const invoiceSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true, // Ensure invoice is always linked to a user
+        required: true, 
     },
     company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Company",
-        required: true, // Ensure invoice is always linked to a company
+        required: true, 
     },
     client: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Client",
-        required: true, // Ensure invoice is always linked to a client
+        required: true, 
+    },
+    
+    account: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "Account", 
+        required: false
     },
     issueDate: {
         type: Date,
@@ -77,11 +83,6 @@ const invoiceSchema = new mongoose.Schema({
     email: {
         type: String,
         // Optional, can be set by user
-    },
-    account: {
-        type: mongoose.Schema.Types.ObjectId, // Reference to Account schema
-        ref: "Account", // Link this to Account model
-        required: false // Not required, as not all invoices may include account details
     },
     status: {
         type: String,

@@ -100,14 +100,25 @@
             
                 <p>
                     Dear <%= firstName %>
-                <p>
-
-                You can find your attachments here:  <%= pdfFiles %>
-
                 </p>
-            <p>
-                Best regards,
-            </p>
+                
+                <p>
+                    You can find your attachments here:
+                </p>
+                
+                <ul>
+                    <% attachments.forEach(attachment => { %>
+                        <li>
+                            <a href="<%= attachment.path %>">Download Invoice <%= attachment.invoiceNumber %></a>
+                        </li>
+                    <% }) %>
+                </ul>
+                
+                <p>
+                    Best regards,
+                </p>
+                
+        
         </div>
             
         <p class="footer-text">You can reach us via mail <a href="mailto:hello@grazac.com.ng">hello@invoiceU.com</a> or call 0706-909-6732 </p>
