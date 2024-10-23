@@ -41,13 +41,13 @@ export const generateInvoicePDF = async (invoice) => {
                 total: invoice.total,
                 issueDate: formattedIssueDate,
                 dueDate: formattedDueDate,
-                reference: invoice.reference, // Pass reference number
-                invoiceNumber: invoice.invoiceNumber, // Pass reference number
-                currency: invoice.currency, // Pass currency
-                email: invoice.email, // Pass email
-                phoneNumber: invoice.phoneNumber, // Pass phone number
-                account: invoice.account, // Pass account details
-                totalInWords: totalInWords // Pass total amount in words
+                reference: invoice.reference, 
+                invoiceNumber: invoice.invoiceNumber, 
+                currency: invoice.currency, 
+                email: invoice.email, 
+                phoneNumber: invoice.phoneNumber, 
+                account: invoice.account, 
+                totalInWords: totalInWords 
             }
         );
 
