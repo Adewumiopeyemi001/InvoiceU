@@ -254,6 +254,42 @@ export const totalInvoice = async (req, res) => {
     }
 };
 
+export const totalInvoiceById = async (req, res) => {
+    try {
+        const { user } = req;
+        const { clientId } = req.params;
+
+        if (!user) {
+            return errorResMsg(res, 401, 'User not found');
+        }
+
+        // Validate if the client exists and belongs to the user
+        const existingClient = await Client.findOne({
+            _id: clientId,
+            user: user._id,  // Ensure client belongs to the user
+        });
+        if (!existingClient) {
+            return errorResMsg(res, 400, 'Client details not found or client does not belong to the user.');
+        }
+
+        // Count completed invoices for the specific client
+        const completedInvoicesCount = await Invoice.countDocuments({
+            user: user._id,
+            client: existingClient._id,
+            status: 'Completed',
+        });
+
+        return successResMsg(res, 200, {
+            success: true,
+            totalCompletedInvoices: completedInvoicesCount,
+        });
+
+    } catch (error) {
+        console.error(error);
+        return errorResMsg(res, 500, 'Internal Server Error');
+    }
+};
+
 export const updateInvoice = async (req, res) => {
     try {
         const { user } = req;
@@ -383,153 +419,6 @@ export const downloadInvoice = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-
-// export const shareInvoices = async(req, res) => {
-//     try {
-//         const { user } = req;
-//         const { invoiceIds } = req.params;
-        
-//         if (!user) {
-//             return errorResMsg(res, 401, 'User not found');
-//         }
-        
-//         // Validate invoice IDs
-//         const validInvoiceIds = invoiceIds.map(id => mongoose.Types.ObjectId(id)).filter(Boolean);
-        
-//         if (validInvoiceIds.length === 0) {
-//             return errorResMsg(res, 400, 'Invalid invoice IDs provided');
-//         }
-        
-//         // Fetch the invoices and populate related fields
-//         const invoices = await Invoice.find({ _id: { $in: validInvoiceIds }, user: user._id })
-//             .populate('client')
-//             .populate('company')
-//             .populate('account');
-            
-//         if (invoices.length === 0) {
-//             return errorResMsg(res, 404, 'No invoices found for the given IDs');
-//         }
-        
-//         // Generate PDFs for each invoice
-//         const pdfFiles = await Promise.all(invoices.map(invoice => generateInvoicePDF(invoice)));
-        
-//         // Check if any PDF generation failed
-//         if (pdfFiles.some(filePath => typeof filePath!=='string')) {
-//             console.error('PDF generation failed for some invoices');
-//             return errorResMsg(res, 500, 'Failed to generate invoice PDFs');
-//         }
-        
-//         // Log file paths for debugging
-//         console.log('Generated PDFs for:', pdfFiles.map(filePath => `File: ${filePath}`));
-        
-//         // Send file attachments for download
-//         res.status(200).json({
-//             success: true,
-//             message: 'PDF files generated successfully',
-//             files: pdfFiles.map(filePath => ({ filename: `invoice_${invoices.find(invoice => invoice._id.toString() === mongoose.Types.ObjectId(filePath).toString()).invoiceNumber}.pdf`, path: filePath })),
-//         });
-
-        
-//     } catch (error) {
-//         console.error('Server error:', error);
-//         return errorResMsg(res, 500, 'Server error');
-        
-//     }
-// };
-
-// export const shareInvoices = async (req, res) => {
-//     try {
-//         const { user } = req;
-//         const { invoiceIds, email } = req.params;
-        
-//         if (!user) {
-//             return errorResMsg(res, 401, 'User not found');
-//         }
-
-//         // Validate invoice IDs - assuming `invoiceIds` is a comma-separated string
-//         const validInvoiceIds = invoiceIds
-//             .split(',')  // Split by comma if multiple IDs are passed
-//             .map(id => {
-//                 // Create ObjectId instances correctly
-//                 if (mongoose.Types.ObjectId.isValid(id)) {
-//                     return new mongoose.Types.ObjectId(id);
-//                 }
-//                 return null;
-//             })
-//             .filter(Boolean);
-
-//         if (validInvoiceIds.length === 0) {
-//             return errorResMsg(res, 400, 'Invalid invoice IDs provided');
-//         }
-
-//         // Fetch the invoices and populate related fields
-//         const invoices = await Invoice.find({ _id: { $in: validInvoiceIds }, user: user._id })
-//             .populate('client')
-//             .populate('company')
-//             .populate('account');
-
-//         if (invoices.length === 0) {
-//             return errorResMsg(res, 404, 'No invoices found for the given IDs');
-//         }
-
-//         // Generate PDFs for each invoice
-//         const pdfFiles = await Promise.all(invoices.map(invoice => generateInvoicePDF(invoice)));
-
-//         // Check if any PDF generation failed
-//         if (pdfFiles.some(filePath => typeof filePath !== 'string')) {
-//             console.error('PDF generation failed for some invoices');
-//             return errorResMsg(res, 500, 'Failed to generate invoice PDFs');
-//         }
-
-//         // Log file paths for debugging
-//         console.log('Generated PDFs for:', pdfFiles);
-
-//         // Optionally: Handle sharing logic (e.g., email, WhatsApp, etc.)
-//         const currentFilePath = fileURLToPath(import.meta.url);
-//         const currentDir = dirname(currentFilePath);
-//         const templatePath = path.join(
-//             currentDir,
-//             '../public/emails/shareinvoice.ejs'
-//         );
-
-//         await ejs.renderFile(
-//             templatePath,
-//             {
-//                 title: 'Invoice sent successfully',
-//                 pdfFiles: pdfFiles,
-//                 firstName: user.firstName,
-//                 attachments: attachments
-//             },
-//             async (err, data) => {
-//                 if (err) {
-//                     console.error('Error rendering email template:', err);
-//                     return errorResMsg(res, 500, 'Error rendering email template');
-//                 }
-        
-//                 // Create an array of attachments
-//                 const attachments = pdfFiles.map((filePath, index) => ({
-//                     invoiceNumber: invoices[index].invoiceNumber,
-//                     path: filePath
-//                 }));
-        
-//                 await emailSenderTemplate(data, 'Invoice sent', email, attachments);
-//             }
-//         );
-        
-//         res.status(200).json({
-//             success: true,
-//             message: 'PDF files generated successfully',
-//             files: pdfFiles.map((filePath, index) => ({
-//                 filename: `invoice_${invoices[index].invoiceNumber}.pdf`,
-//                 path: filePath,
-//             })),
-//         });
-
-//     } catch (error) {
-//         console.error('Server error:', error);
-//         return errorResMsg(res, 500, 'Server error');
-//     }
-// };
 
 export const shareInvoices = async (req, res) => {
     try {
