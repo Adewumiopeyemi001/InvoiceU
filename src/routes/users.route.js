@@ -4,6 +4,7 @@ import { authenticateUser } from '../middlewares/auth.js';
 import upload from "../public/images/multer.js"
 import { changePassword, forgotPassword, resetPassword } from '../controllers/password.controller.js';
 import { createAccount, editProfile, getProfile } from '../controllers/user.controller.js';
+import { authRateLimiter, registerRateLimiter } from '../middlewares/rateLimiter.js';
 
 const router = express.Router();
 
@@ -34,7 +35,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.post('/register', register);
+router.post('/register', registerRateLimiter, register);
 /** 
  * @swagger
  * /login:
@@ -62,7 +63,7 @@ router.post('/register', register);
  *       500:
  *         description: Internal server error
  */
-router.post('/login', login);
+router.post('/login', authRateLimiter, login);
 
 /**
  * @swagger
@@ -611,7 +612,7 @@ router.put('/editprofile', authenticateUser, upload.fields([{ name: 'companyLogo
  *                   type: string
  *                   example: "Server Error"
  */
-router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password', authRateLimiter, forgotPassword);
 
 /**
  * @swagger
@@ -701,7 +702,7 @@ router.post('/forgot-password', forgotPassword);
  *                   type: string
  *                   example: "Server Error"
  */
-router.post('/reset-password', resetPassword);
+router.post('/reset-password', authRateLimiter, resetPassword);
 
 /**
  * @swagger
