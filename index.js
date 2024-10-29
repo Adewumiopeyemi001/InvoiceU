@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import passport from 'passport';
@@ -17,6 +18,16 @@ import { options } from './src/middlewares/swaggerDoc.js';
 dotenv.config();
 
 const app = express();
+
+// Configure CORS to allow requests from your frontend
+const corsOptions = {
+  origin: 'http://localhost:5173', // Allow your local frontend
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // Allow cookies if needed
+};
+
+app.use(cors(corsOptions));
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
