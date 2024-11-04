@@ -19,47 +19,46 @@ dotenv.config();
 
 const app = express();
 
-// Configure CORS to allow requests from your frontend
-const corsOptions = {
-  origin: 'http://localhost:5173', // Allow your local frontend
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true, // Allow cookies if needed
-};
+// Apply CORS globally
+app.use(cors());
 
-app.use(cors(corsOptions));
+// Handle preflight requests for all routes
+app.options('*', cors());
 
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 const swaggerSpec = swaggerJsdoc(options);
 
-// Set up Swagger UI
+// Set up Swagger UI documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const PORT = process.env.PORT || 3000;
 
-app.use(
-  session({ secret: 'your_secret_key', resave: false, saveUninitialized: true })
-);
+// Configure session and passport
+app.use(session({ secret: 'your_secret_key', resave: false, saveUninitialized: true }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Test route to confirm server is running
 app.get('/', (req, res) => {
   res.send('Welcome to invoiceU');
 });
 
+// Mount routers for each endpoint
 app.use('/', userRouter);
 app.use('/', authRoutes);
 app.use('/', clientRoutes);
 app.use('/', invoiceRoutes);
 app.use('/', accountRoutes);
 
+// Start server and connect to the database
 const server = app.listen(PORT, async () => {
   try {
     await connectDB(process.env.MONGODB_URL);
     console.log('Connected to database');
-    console.log(`listening on http://localhost:${PORT}`);
+    console.log(`Listening on http://localhost:${PORT}`);
   } catch (error) {
     console.log(error);
   }
