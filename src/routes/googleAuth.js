@@ -1,17 +1,17 @@
 import express from 'express';
 import passport from 'passport';
-import cors from 'cors';
+// import cors from 'cors';
 import '../config/passport.js'; // Ensure this file is imported to configure passport
 import { googleSign } from '../controllers/google.user.js';
 
 const router = express.Router();
 
 // Apply CORS to Google authentication routes if needed
-const corsOptions = {
-  origin: 'http://localhost:5173',
-  credentials: true,
-};
-router.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: 'http://localhost:5173',
+//   credentials: true,
+// };
+// router.use(cors(corsOptions));
 
 // Google OAuth
 
