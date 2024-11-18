@@ -117,6 +117,41 @@ export const login = async (req, res) => {
   }
 };
 
+// export const verifyEmail = async (req, res) => {
+//   try {
+//     const token = req.query.token;
+//     if (!token) {
+//       return errorResMsg(res, 400, 'Invalid Token');
+//     }
+
+//     // Decode the token
+//     const decoded = jwt.verify(token, process.env.SECRET_KEY);
+
+//     // Use _id instead of userId (to match the token payload)
+//     const userId = decoded._id;
+    
+//     const user = await User.findByIdAndUpdate(userId, { emailStatus: null }, { new: true });
+//     if (!user) {
+//       return errorResMsg(res, 400, 'User not found');
+//     }
+//     // Generate a new token for the user session after successful verification
+//     const sessionToken = user.generateAuthToken();
+
+//     // Add the token to the user's tokens array and save it
+//     user.tokens = user.tokens.concat({ token: sessionToken });
+//     await user.save();
+
+//     return successResMsg(res, 200, {
+//       success: true,
+//       message: 'Email verified successfully',
+//       token: sessionToken,  
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return errorResMsg(res, 500, 'Server Error');
+//   }
+// };
+
 export const verifyEmail = async (req, res) => {
   try {
     const token = req.query.token;
@@ -134,6 +169,7 @@ export const verifyEmail = async (req, res) => {
     if (!user) {
       return errorResMsg(res, 400, 'User not found');
     }
+
     // Generate a new token for the user session after successful verification
     const sessionToken = user.generateAuthToken();
 
@@ -141,16 +177,14 @@ export const verifyEmail = async (req, res) => {
     user.tokens = user.tokens.concat({ token: sessionToken });
     await user.save();
 
-    return successResMsg(res, 200, {
-      success: true,
-      message: 'Email verified successfully',
-      token: sessionToken,  
-    });
+    // Redirect to the success URL with the token as a query parameter
+    return res.redirect(`https://invoice-u.vercel.app/success?token=${sessionToken}`);
   } catch (error) {
     console.error(error);
     return errorResMsg(res, 500, 'Server Error');
   }
 };
+
 
 export const logout = async (req, res) => {
   try {
