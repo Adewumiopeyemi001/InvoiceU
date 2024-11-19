@@ -130,20 +130,29 @@ export const verifyEmail = async (req, res) => {
     // Use _id instead of userId (to match the token payload)
     const userId = decoded._id;
     
-    const user = await User.findByIdAndUpdate(userId, { emailStatus: null }, { new: true });
+    // Find and update the user's email status
+    let user = await User.findById(userId);
     if (!user) {
       return errorResMsg(res, 400, 'User not found');
     }
 
-    // Generate a new token for the user session after successful verification
+    user.emailStatus = true;  // Set emailStatus to true after verification
+
+    // Generate a new session token for the user
     const sessionToken = user.generateAuthToken();
 
-    // Add the token to the user's tokens array and save it
+    // Add the session token to the user's tokens array
     user.tokens = user.tokens.concat({ token: sessionToken });
-    await user.save();
+    await user.save(); // Save the user with updated tokens and emailStatus
 
-    // Redirect to the success URL with the token as a query parameter
-    return res.redirect(`https://invoice-u.vercel.app/success?token=${sessionToken}`);
+    // Send a success response with the sessionToken
+    return successResMsg(res, 200, {
+      success: true,
+      data: {
+        sessionToken,
+      },
+      message: 'Email verified successfully',
+    });
   } catch (error) {
     console.error(error);
     return errorResMsg(res, 500, 'Server Error');
