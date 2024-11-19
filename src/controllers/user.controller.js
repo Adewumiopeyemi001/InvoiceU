@@ -69,6 +69,7 @@ export const createAccount = async (req, res) => {
         companyAddress 
       } = req.body;
       const companyLogo = req.file;
+  // console.log(user);
   
       // Check required fields
       if (
