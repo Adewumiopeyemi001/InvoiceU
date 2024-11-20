@@ -33,6 +33,7 @@ export const register = async (req, res) => {
     });
 
     const verificationLink = `${req.protocol}://${req.get('host')}/verify-email?token=${token}`;
+    console.log(verificationLink);
 
     const currentFilePath = fileURLToPath(import.meta.url);
     const currentDir = dirname(currentFilePath);
@@ -130,26 +131,29 @@ export const verifyEmail = async (req, res) => {
     // Use _id instead of userId (to match the token payload)
     const userId = decoded._id;
     
-    const user = await User.findByIdAndUpdate(userId, { emailStatus: null }, { new: true });
+    // Find and update the user's email status
+    let user = await User.findById(userId);
     if (!user) {
       return errorResMsg(res, 400, 'User not found');
     }
 
-    // Generate a new token for the user session after successful verification
+    user.emailStatus = null;  
+
+    // Generate a new session token for the user
     const sessionToken = user.generateAuthToken();
 
-    // Add the token to the user's tokens array and save it
+    // Add the session token to the user's tokens array
     user.tokens = user.tokens.concat({ token: sessionToken });
-    await user.save();
+    await user.save(); // Save the user with updated tokens and emailStatus
 
-    // Redirect to the success URL with the token as a query parameter
-    return res.redirect(`https://invoice-u.vercel.app/success?token=${sessionToken}`);
+    // Redirect the user to the frontend with the sessionToken as a query parameter
+    return res.redirect(`https://invoice-u.vercel.app/success?sessionToken=${sessionToken}`);
   } catch (error) {
     console.error(error);
     return errorResMsg(res, 500, 'Server Error');
   }
 };
- 
+
 export const logout = async (req, res) => {
   try {
     if (!req.user) {
