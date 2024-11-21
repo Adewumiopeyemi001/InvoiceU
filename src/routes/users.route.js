@@ -531,7 +531,7 @@ router.put('/createaccount', authenticateUser, upload.single("companyLogo"), cre
  *                   type: string
  *                   example: "Server Error"
  */
-router.put('/editprofile', authenticateUser, upload.fields([{ name: 'companyLogo' }, { name: 'profilePicture' }]), editProfile);
+router.put('/editprofile', authenticateUser, upload.single("companyLogo"), editProfile);
 
 /**
  * @swagger

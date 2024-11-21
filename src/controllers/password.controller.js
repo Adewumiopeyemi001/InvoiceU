@@ -38,8 +38,9 @@ export const forgotPassword = async(req, res) => {
      await user.save();
   
      // Create reset password URL
-     const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
-      
+    //  const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
+    const resetUrl = `https://invoice-u.vercel.app/reset?token=${resetToken}`;
+
       const currentFilePath = fileURLToPath(import.meta.url);
       const currentDir = dirname(currentFilePath);
       const templatePath = path.join(
@@ -122,6 +123,8 @@ export const forgotPassword = async(req, res) => {
       });
       
     } catch (error) {
+      console.error(error);
+      return errorResMsg(res, 500, 'Server Error');
       
     }
   };
