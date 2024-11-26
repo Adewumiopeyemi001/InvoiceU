@@ -40,28 +40,16 @@ const userSchema = new mongoose.Schema({
                }
     }
   ],
-  //  phoneNumber: {
-  //   type: String,
-  //   required: true,
-  //   validate: function (value) {
-  //     // Add your custom validation logic here
-  //     const regex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
-  //     return regex.test(value);
-  //   }
-  //  },
-  //  address: {
-  //   type: String,
-  //  },
   phoneNumber: {
     type: String,
     // required: true,
-    validate: {
-      validator: function (value) {
-        const regex = /^\+\d{1,3}\d{10,11}$/;
-        return regex.test(value);
-      },
-      message: 'Phone number must include a valid country code and be followed by a 10-digit number.'
-    }
+    // validate: {
+    //   validator: function (value) {
+    //     const regex = /^\+\d{1,3}\d{10,11}$/;
+    //     return regex.test(value);
+    //   },
+    //   message: 'Phone number must include a valid country code and be followed by a 10-digit number.'
+    // }
 },
 
    registrationDate: {
