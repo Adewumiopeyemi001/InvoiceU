@@ -54,7 +54,7 @@ const userSchema = new mongoose.Schema({
   //  },
   phoneNumber: {
     type: String,
-    required: true,
+    // required: true,
     validate: {
       validator: function (value) {
         const regex = /^\+\d{1,3}\d{10,11}$/;
