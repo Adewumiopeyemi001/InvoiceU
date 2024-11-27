@@ -24,8 +24,8 @@ export const addClient = async (req, res) => {
       return errorResMsg(res, 404, 'Company profile not found. Please complete your profile.');
     }
 
-    const { companyName, companyLogo, occupation, industry } = updatedProfile;
-    if (!companyName || !companyLogo || !occupation || !industry) {
+    const { companyName, industry } = updatedProfile;
+    if (!companyName  || !industry) {
       return errorResMsg(res, 400, 'Please complete your company profile before adding a client');
     }
 
