@@ -195,10 +195,6 @@ export const filterClients = async (req, res) => {
       filter.clientName = { $regex: search, $options: 'i' };
     }
     
-    // if (industry) {
-    //   filter.clientIndustry = industry; // Exact match for industry
-    // }
-
     if (city) {
       filter.city = { $regex: city, $options: 'i' }; // Partial match for city
     }
