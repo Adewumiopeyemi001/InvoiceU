@@ -6,7 +6,7 @@ import Company from "../models/companys.model.js";
 export const addClient = async (req, res) => {
   try {
     const user = req.user;
-    const { businessName, clientIndustry, email, country, city, zipCode, address } = req.body;
+    const { clientName, email, country, city, zipCode, address } = req.body;
 
     if (!user) {
       return errorResMsg(res, 401, 'User not found');
@@ -30,20 +30,19 @@ export const addClient = async (req, res) => {
     }
 
     // Check for required client fields
-    if (!businessName || !clientIndustry || !email) {
+    if (!clientName || !email) {
       return errorResMsg(res, 400, 'Please fill in the required fields');
     }
 
     // Look for an existing client with the same businessName under the current user
-    const existingClient = await Client.findOne({ businessName, user: user._id });
+    const existingClient = await Client.findOne({ clientName, user: user._id });
     if (existingClient) {
       return errorResMsg(res, 400, 'You have already added this client');
     }
 
     // Create and save the new client
     const client = new Client({
-      businessName,
-      clientIndustry,
+      clientName,
       email,
       country,
       city,
@@ -120,13 +119,13 @@ export const updateClient = async (req, res) => {
   try {
     const user = req.user;
     const clientId = req.params.clientId;
-    const { businessName, clientIndustry,country, email, city, zipCode, address } = req.body;
+    const { clientName, country, email, city, zipCode, address } = req.body;
     
     if (!user) {
       return errorResMsg(res, 401, 'User not found');
     }
     
-    const client = await Client.findOneAndUpdate({ _id: clientId, user: user._id }, {businessName, clientIndustry, email,country, city, zipCode, address }, { new: true });
+    const client = await Client.findOneAndUpdate({ _id: clientId, user: user._id }, {clientName, email,country, city, zipCode, address }, { new: true });
     
     if (!client) {
       return errorResMsg(res, 404, 'Client not found');
@@ -158,7 +157,7 @@ export const searchClient = async (req, res) => {
     }
 
     const clients = await Client.find({
-      businessName: { $regex: searchQuery, $options: 'i' }, 
+      clientName: { $regex: searchQuery, $options: 'i' }, 
       user: user._id
     }).exec();
 
@@ -183,7 +182,7 @@ export const searchClient = async (req, res) => {
 export const filterClients = async (req, res) => {
   try {
     const { user } = req;
-    const { search, industry, city } = req.query; // Multiple filters
+    const { search, clientName, city } = req.query; // Multiple filters
     
     if (!user) {
       return errorResMsg(res, 401, 'User not found');
@@ -193,13 +192,9 @@ export const filterClients = async (req, res) => {
     let filter = { user: user._id };
 
     if (search) {
-      filter.businessName = { $regex: search, $options: 'i' };
+      filter.clientName = { $regex: search, $options: 'i' };
     }
     
-    if (industry) {
-      filter.clientIndustry = industry; // Exact match for industry
-    }
-
     if (city) {
       filter.city = { $regex: city, $options: 'i' }; // Partial match for city
     }
