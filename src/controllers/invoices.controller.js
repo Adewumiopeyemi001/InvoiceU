@@ -278,7 +278,7 @@ export const filterByStatus = async (req, res) => {
 
         // Find all invoices for the user with the given status and populate client details
         const invoices = await Invoice.find({ user: user._id, status })
-            .populate('client', 'businessName'); // Populate the client field with the businessName only
+            .populate('client', 'clientName'); // Populate the client field with the businessName only
 
         // If no invoices are found, return an empty array
         if (invoices.length === 0) {
@@ -296,7 +296,7 @@ export const filterByStatus = async (req, res) => {
             issueDate: invoice.issueDate,
             totalAmount: invoice.totalAmount,
             status: invoice.status,
-            clientBusinessName: invoice.client.businessName, // Adding client business name here
+            clientName: invoice.client.clientName, // Adding client business name here
         }));
 
         // Return the array of invoice details
@@ -368,11 +368,56 @@ export const totalInvoiceById = async (req, res) => {
     }
 };
 
+// export const updateInvoice = async (req, res) => {
+//     try {
+//         const { user } = req;
+//         const { invoiceId } = req.params;
+//         const { status, clientId, items, issueDate, dueDate, phoneNumber, email, AccountDetails } = req.body;
+
+//         if (!user) {
+//             return errorResMsg(res, 401, 'User not found');
+//         }
+
+//         // Find the invoice and ensure it's a draft before allowing updates
+//         const existingInvoice = await Invoice.findOne({ _id: invoiceId, user: user._id });
+
+//         if (!existingInvoice) {
+//             return errorResMsg(res, 404, 'Invoice not found');
+//         }
+
+//         if (existingInvoice.status !== 'Draft') {
+//             return errorResMsg(res, 400, 'Only invoices with status "Draft" can be updated');
+//         }
+
+//         // Update invoice details
+//         existingInvoice.client = clientId || existingInvoice.client;
+//         existingInvoice.items = items || existingInvoice.items;
+//         existingInvoice.issueDate = issueDate || existingInvoice.issueDate;
+//         existingInvoice.dueDate = dueDate || existingInvoice.dueDate;
+//         existingInvoice.phoneNumber = phoneNumber || existingInvoice.phoneNumber;
+//         existingInvoice.email = email || existingInvoice.email;
+//         existingInvoice.account = AccountDetails
+//         existingInvoice.status = status || existingInvoice.status;
+
+//         await existingInvoice.save();
+
+//         return successResMsg(res, 200, {
+//             success: true,
+//             message: 'Invoice updated successfully',
+//             invoice: existingInvoice
+//         });
+
+//     } catch (error) {
+//         console.error(error);
+//         return errorResMsg(res, 500, 'Internal Server Error');
+//     }
+// };
+
 export const updateInvoice = async (req, res) => {
     try {
         const { user } = req;
         const { invoiceId } = req.params;
-        const { status, clientId, items, issueDate, dueDate, phoneNumber, email, accountDetailsId } = req.body;
+        const { status, clientId, items, issueDate, dueDate, phoneNumber, email, AccountDetails } = req.body;
 
         if (!user) {
             return errorResMsg(res, 401, 'User not found');
@@ -389,32 +434,36 @@ export const updateInvoice = async (req, res) => {
             return errorResMsg(res, 400, 'Only invoices with status "Draft" can be updated');
         }
 
-        // Fetch or validate account details if provided
-        let accountNumber = existingInvoice.accountNumber; // Retain existing account number
-        if (accountDetailsId) {
-            const existingAccount = await accountsModel.findOne({ _id: accountDetailsId });
-            if (!existingAccount) {
-                return errorResMsg(res, 404, 'Account details not found');
+        // Validate AccountDetails if provided
+        if (AccountDetails) {
+            const { accountType, bankName, accountName, accountNumber } = AccountDetails;
+            if (!accountType || !bankName || !accountName || !accountNumber) {
+                return errorResMsg(res, 400, 'All fields in AccountDetails must be provided if AccountDetails is included');
             }
-            accountNumber = existingAccount.accountNumber;
+            if (accountNumber.length !== 10) {
+                return errorResMsg(res, 400, 'Account number must be exactly 10 digits');
+            }
         }
 
         // Update invoice details
-        existingInvoice.client = clientId || existingInvoice.client;
-        existingInvoice.items = items || existingInvoice.items;
-        existingInvoice.issueDate = issueDate || existingInvoice.issueDate;
-        existingInvoice.dueDate = dueDate || existingInvoice.dueDate;
-        existingInvoice.phoneNumber = phoneNumber || existingInvoice.phoneNumber;
-        existingInvoice.email = email || existingInvoice.email;
-        existingInvoice.account = accountDetailsId ? accountDetailsId : existingInvoice.account;
-        existingInvoice.status = status || existingInvoice.status;
+        const updatedFields = {
+            client: clientId || existingInvoice.client,
+            items: items || existingInvoice.items,
+            issueDate: issueDate || existingInvoice.issueDate,
+            dueDate: dueDate || existingInvoice.dueDate,
+            phoneNumber: phoneNumber || existingInvoice.phoneNumber,
+            email: email || existingInvoice.email,
+            AccountDetails: AccountDetails || existingInvoice.AccountDetails,
+            status: status || existingInvoice.status,
+        };
 
-        await existingInvoice.save();
+        // Update the invoice document
+        await Invoice.findByIdAndUpdate(invoiceId, updatedFields, { new: true });
 
         return successResMsg(res, 200, {
             success: true,
             message: 'Invoice updated successfully',
-            invoice: existingInvoice
+            invoice: updatedFields,
         });
 
     } catch (error) {
