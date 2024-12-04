@@ -13,11 +13,100 @@ import accountsModel from "../models/accounts.model.js";
 import { generateInvoicePDF } from "../lib/generatepdf.js";
 // import PDFDocument from 'pdfkit';
 
+// export const createInvoice = async (req, res) => {
+//     try {
+//         const { user } = req;
+//         const { status = "Draft" } = req.body;
+//         const { clientId, items, issueDate, dueDate, phoneNumber, email, AccountDetails } = req.body;
+
+//         // Validate items and dates
+//         if (!items || items.length === 0) {
+//             return errorResMsg(res, 400, 'Invoice items are required');
+//         }
+//         if (!issueDate || !dueDate) {
+//             return errorResMsg(res, 400, 'Issue date and due date are required');
+//         }
+
+//         // Calculate total amount
+//         const subTotal = items.reduce((acc, item) => acc + item.quantity * item.rate, 0);
+//         if (subTotal <= 0) {
+//             return errorResMsg(res, 400, 'Invalid total amount');
+//         }
+
+//        // Calculate 10% tax
+//         const tax = subTotal * 0.10;
+
+// // Calculate total amount
+//         const total = subTotal + tax;
+
+//         // Validate user and company
+//         const existingUser = await User.findById(user._id);
+//         if (!existingUser) {
+//             return errorResMsg(res, 401, 'User not found');
+//         }
+//         const existingCompany = await Company.findOne({ user: user._id });
+//         if (!existingCompany) {
+//             return errorResMsg(res, 404, 'Company details not found');
+//         }
+
+//         // Validate client
+//         const existingClient = await Client.findById(clientId);
+//         if (!existingClient) {
+//             return errorResMsg(res, 400, 'Client details not found, please create a new client');
+//         }
+
+//         // Generate invoice number and reference
+//         const timestamp = Date.now();
+//         const reference = `#AB${timestamp}`;
+//         const invoiceNumber = `#INV_${Math.floor(Math.random() * 900000) + 100000}`;
+
+//         // Create new invoice
+//         const newInvoice = new Invoice({
+//             user: user._id,
+//             company: existingCompany._id,
+//             client: existingClient._id,
+//             invoiceNumber,
+//             issueDate,
+//             dueDate,
+//             subTotal,
+//             tax,
+//             total,
+//             reference,
+//             phoneNumber: phoneNumber || null,
+//             email: email || null,
+//             status,
+//             items,
+//             AccountDetails: AccountDetails || undefined, // Only include if provided
+//         });
+
+//         await newInvoice.save();
+
+//         return successResMsg(res, 201, {
+//             success: true,
+//             message: `Invoice ${status === "Draft" ? 'saved as draft' : 'completed successfully'}`,
+//             invoice: {
+//                 invoiceNumber,
+//                 issueDate,
+//                 dueDate,
+//                 subTotal,
+//                 tax,
+//                 total,
+//                 reference,
+//                 phoneNumber,
+//                 status,
+//                 items,
+//             },
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         return errorResMsg(res, 500, 'Internal Server Error');
+//     }
+// };
+
 export const createInvoice = async (req, res) => {
     try {
         const { user } = req;
-        const { status = "Draft" } = req.body;
-        const { clientId, items, issueDate, dueDate, phoneNumber, email, accountDetailsId } = req.body;
+        const { status = "Draft", clientId, items, issueDate, dueDate, phoneNumber, email, AccountDetails } = req.body;
 
         // Validate items and dates
         if (!items || items.length === 0) {
@@ -27,16 +116,27 @@ export const createInvoice = async (req, res) => {
             return errorResMsg(res, 400, 'Issue date and due date are required');
         }
 
+        // Validate AccountDetails if provided
+        if (AccountDetails) {
+            const { accountType, bankName, accountName, accountNumber } = AccountDetails;
+            if (!accountType || !bankName || !accountName || !accountNumber) {
+                return errorResMsg(res, 400, 'All fields in AccountDetails must be provided if AccountDetails is included');
+            }
+
+            // Validate account number is exactly 10 digits
+            if (!/^\d{10}$/.test(accountNumber)) {
+                return errorResMsg(res, 400, 'Account number must be exactly 10 digits');
+            }
+        }
+
         // Calculate total amount
         const subTotal = items.reduce((acc, item) => acc + item.quantity * item.rate, 0);
         if (subTotal <= 0) {
             return errorResMsg(res, 400, 'Invalid total amount');
         }
 
-       // Calculate 10% tax
-        const tax = subTotal * 0.10;
-
-// Calculate total amount
+        // Calculate 10% tax and total amount
+        const tax = 0;
         const total = subTotal + tax;
 
         // Validate user and company
@@ -55,19 +155,6 @@ export const createInvoice = async (req, res) => {
             return errorResMsg(res, 400, 'Client details not found, please create a new client');
         }
 
-        // Fetch or validate account details if provided
-        let accountNumber = null;
-        let existingAccount = null; // Declare it here
-        if (accountDetailsId) { // Ensure accountDetailsId exists
-            existingAccount = await accountsModel.findOne({ _id: accountDetailsId });
-            if (!existingAccount) {
-                return errorResMsg(res, 404, 'Account details not found');
-            }
-            accountNumber = existingAccount.accountNumber;
-        }
-
-        // console.log(accountDetailsId, accountNumber);
-
         // Generate invoice number and reference
         const timestamp = Date.now();
         const reference = `#AB${timestamp}`;
@@ -78,7 +165,6 @@ export const createInvoice = async (req, res) => {
             user: user._id,
             company: existingCompany._id,
             client: existingClient._id,
-            account: existingAccount ? existingAccount._id : null,
             invoiceNumber,
             issueDate,
             dueDate,
@@ -88,8 +174,9 @@ export const createInvoice = async (req, res) => {
             reference,
             phoneNumber: phoneNumber || null,
             email: email || null,
-            status, 
+            status,
             items,
+            AccountDetails: AccountDetails || undefined, // Include if provided
         });
 
         await newInvoice.save();
@@ -97,21 +184,10 @@ export const createInvoice = async (req, res) => {
         return successResMsg(res, 201, {
             success: true,
             message: `Invoice ${status === "Draft" ? 'saved as draft' : 'completed successfully'}`,
-            invoice: {
-                invoiceNumber,
-                issueDate,
-                dueDate,
-                subTotal,
-                tax,
-                total,
-                reference,
-                phoneNumber,
-                status,
-                items,
-            },
+            invoice: newInvoice, // Return the full invoice object
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error creating invoice:', error);
         return errorResMsg(res, 500, 'Internal Server Error');
     }
 };
@@ -156,7 +232,7 @@ export const getAllInvoices = async(req, res) => {
            .sort({[sortBy]: order})
            .skip((page - 1) * limit)
            .limit(limit)
-           .populate('client', 'businessName')
+           .populate('client', 'clientName')
         
              // If no invoices are found, return an empty array
         if (invoices.length === 0) {
@@ -172,10 +248,12 @@ export const getAllInvoices = async(req, res) => {
             reference: invoice.reference,
             invoiceNumber: invoice.invoiceNumber,
             issueDate: invoice.issueDate,
-            totalAmount: invoice.totalAmount,
+            totalAmount: invoice.total,
             status: invoice.status,
-            clientBusinessName: invoice.client.businessName, // Adding client business name here
+            clientName: invoice.client.clientName,
         }));
+        console.log(invoiceDetails);
+        
 
         return successResMsg(res, 200, {
             success: true,

@@ -24,7 +24,10 @@ const clientModel = new mongoose.Schema({
     },
     address: {
         type: String,
-    }
+    },
+    phoneNo: {
+        type: String,
+    },
 },
 {
     timestamps: true,

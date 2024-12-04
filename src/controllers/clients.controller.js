@@ -6,7 +6,7 @@ import Company from "../models/companys.model.js";
 export const addClient = async (req, res) => {
   try {
     const user = req.user;
-    const { clientName, email, country, city, zipCode, address } = req.body;
+    const { clientName, email, country, city, zipCode, address, phoneNo } = req.body;
 
     if (!user) {
       return errorResMsg(res, 401, 'User not found');
@@ -48,6 +48,7 @@ export const addClient = async (req, res) => {
       city,
       zipCode,
       address,
+      phoneNo,
       user: user._id
     });
 

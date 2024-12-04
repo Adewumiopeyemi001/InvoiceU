@@ -40,11 +40,6 @@ const invoiceSchema = new mongoose.Schema({
         required: true, 
     },
     
-    account: {
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "Account", 
-        required: false
-    },
     issueDate: {
         type: Date,
         required: true,
@@ -88,6 +83,40 @@ const invoiceSchema = new mongoose.Schema({
         type: String,
         enum: ["Draft", "Completed"],
         default: "Draft",
+    },
+    AccountDetails: {
+        type: {
+            accountType: {
+                type: String,
+                required: true,
+            },
+            bankName: {
+                type: String,
+                required: true,
+            },
+            accountName: {
+                type: String,
+                required: true,
+            },
+            accountNumber: {
+                type: String,
+                required: true,
+                unique: true,
+                validate: {
+                    validator: (value) => /^\d{10}$/.test(value), // Ensures exactly 10 digits
+                    message: "Account number must be exactly 10 digits.",
+                },
+            }
+        },
+        required: false, // AccountDetails is optional
+        validate: {
+            validator: function (value) {
+                if (!value) return true; // If AccountDetails is not provided, it's valid
+                // Ensure all subfields are provided
+                return value.accountType && value.bankName && value.accountName;
+            },
+            message: "All fields in AccountDetails must be provided if AccountDetails is present",
+        },
     },
 }, {
     timestamps: true,
