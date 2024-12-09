@@ -368,51 +368,6 @@ export const totalInvoiceById = async (req, res) => {
     }
 };
 
-// export const updateInvoice = async (req, res) => {
-//     try {
-//         const { user } = req;
-//         const { invoiceId } = req.params;
-//         const { status, clientId, items, issueDate, dueDate, phoneNumber, email, AccountDetails } = req.body;
-
-//         if (!user) {
-//             return errorResMsg(res, 401, 'User not found');
-//         }
-
-//         // Find the invoice and ensure it's a draft before allowing updates
-//         const existingInvoice = await Invoice.findOne({ _id: invoiceId, user: user._id });
-
-//         if (!existingInvoice) {
-//             return errorResMsg(res, 404, 'Invoice not found');
-//         }
-
-//         if (existingInvoice.status !== 'Draft') {
-//             return errorResMsg(res, 400, 'Only invoices with status "Draft" can be updated');
-//         }
-
-//         // Update invoice details
-//         existingInvoice.client = clientId || existingInvoice.client;
-//         existingInvoice.items = items || existingInvoice.items;
-//         existingInvoice.issueDate = issueDate || existingInvoice.issueDate;
-//         existingInvoice.dueDate = dueDate || existingInvoice.dueDate;
-//         existingInvoice.phoneNumber = phoneNumber || existingInvoice.phoneNumber;
-//         existingInvoice.email = email || existingInvoice.email;
-//         existingInvoice.account = AccountDetails
-//         existingInvoice.status = status || existingInvoice.status;
-
-//         await existingInvoice.save();
-
-//         return successResMsg(res, 200, {
-//             success: true,
-//             message: 'Invoice updated successfully',
-//             invoice: existingInvoice
-//         });
-
-//     } catch (error) {
-//         console.error(error);
-//         return errorResMsg(res, 500, 'Internal Server Error');
-//     }
-// };
-
 export const updateInvoice = async (req, res) => {
     try {
         const { user } = req;
