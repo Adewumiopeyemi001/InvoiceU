@@ -40,14 +40,14 @@ const invoiceSchema = new mongoose.Schema({
         required: true, 
     },
     
-    issueDate: {
-        type: Date,
-        required: true,
-    },
-    dueDate: {
-        type: Date,
-        required: true,
-    },
+    // issueDate: {
+    //     type: Date,
+    //     required: true,
+    // },
+    // dueDate: {
+    //     type: Date,
+    //     required: true,
+    // },
     subTotal: {
         type: Number,
         required: true,
@@ -65,10 +65,10 @@ const invoiceSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    reference: {
-        type: String,
-        required: true,
-    },
+    // reference: {
+    //     type: String,
+    //     required: true,
+    // },
     items: [itemSchema], // Array of items
 
     phoneNumber: {
@@ -81,8 +81,8 @@ const invoiceSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["Draft", "Completed"],
-        default: "Draft",
+        // enum: ["Draft", "Completed"],
+        default: "Completed",
     },
     AccountDetails: {
         type: {

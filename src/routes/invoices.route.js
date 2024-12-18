@@ -1,8 +1,9 @@
 import express from 'express';
-import { createInvoice, deleteInvoice, downloadInvoice, filterByStatus, getAllInvoices, getInvoiceById, shareInvoices, totalInvoice, totalInvoiceById, updateInvoice } from '../controllers/invoices.controller.js';
+import { createInvoice, deleteInvoice, downloadInvoice, filterByStatus, generateInvoiceNumber, getAllInvoices, getInvoiceById, shareInvoices, totalInvoice, totalInvoiceById, updateInvoice } from '../controllers/invoices.controller.js';
 import { authenticateUser } from '../middlewares/auth.js';
 const Router = express.Router();
 
+Router.get('/invoicenumber', generateInvoiceNumber);
 /**
  * @swagger
  * /createinvoice:

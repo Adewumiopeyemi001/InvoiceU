@@ -15,12 +15,10 @@ export const getProfile = async (req, res) => {
     // Find the company associated with the user (if available)
     const company = await Company.findOne({ user: user._id });
 
-    // Find all accounts associated with the user (if available)
-    // const accounts = await Account.find({ user: user._id });
-
     // Build the user profile based on available information
     const userProfile = {
-      name: `${user.firstName} ${user.lastName}`,
+      firstName: user.firstName,
+       lastName: user.lastName,
       phoneNumber: user.phoneNumber || null,
       // address: user.address || null,
       registrationDate: user.registrationDate || null,
@@ -32,12 +30,6 @@ export const getProfile = async (req, res) => {
       state: company?.state || null,
       zipCode: company?.zipCode || null,
       companyAddress: company?.companyAddress || null,
-      // accounts: accounts.map(account => ({
-      //   accountType: account.accountType || null,
-      //   bankName: account.bankName || null,
-      //   accountName: account.accountName || null,
-      //   accountNumber: account.accountNumber || null,
-      // }))
     };
 
     return successResMsg(res, 200, {
