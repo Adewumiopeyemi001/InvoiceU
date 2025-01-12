@@ -78,8 +78,6 @@ export const createInvoice = async (req, res) => {
             return errorResMsg(res, 400, 'Client details not found, please create a new client');
         }
 
-        // const invoiceNumber = `#INV_${Math.floor(Math.random() * 900000) + 100000}`;
-
         // Create new invoice
         const newInvoice = new Invoice({
             user: user._id,
@@ -162,9 +160,9 @@ export const getAllInvoices = async(req, res) => {
 
         // Map over the invoices array to extract required details, including client business name
         const invoiceDetails = invoices.map((invoice) => ({
-            reference: invoice.reference,
+            // reference: invoice.reference,
             invoiceNumber: invoice.invoiceNumber,
-            issueDate: invoice.issueDate,
+            // issueDate: invoice.issueDate,
             totalAmount: invoice.total,
             status: invoice.status,
             clientName: invoice.client.clientName,
@@ -208,9 +206,9 @@ export const filterByStatus = async (req, res) => {
 
         // Map over the invoices array to extract required details, including client business name
         const invoiceDetails = invoices.map((invoice) => ({
-            reference: invoice.reference,
+            // reference: invoice.reference,
             invoiceNumber: invoice.invoiceNumber,
-            issueDate: invoice.issueDate,
+            // issueDate: invoice.issueDate,
             totalAmount: invoice.totalAmount,
             status: invoice.status,
             clientName: invoice.client.clientName, // Adding client business name here
@@ -289,7 +287,7 @@ export const updateInvoice = async (req, res) => {
     try {
         const { user } = req;
         const { invoiceId } = req.params;
-        const { status, clientId, items, issueDate, dueDate, phoneNumber, email, AccountDetails } = req.body;
+        const { status, clientId, items, AccountDetails } = req.body;
 
         if (!user) {
             return errorResMsg(res, 401, 'User not found');
@@ -300,10 +298,6 @@ export const updateInvoice = async (req, res) => {
 
         if (!existingInvoice) {
             return errorResMsg(res, 404, 'Invoice not found');
-        }
-
-        if (existingInvoice.status !== 'Draft') {
-            return errorResMsg(res, 400, 'Only invoices with status "Draft" can be updated');
         }
 
         // Validate AccountDetails if provided
@@ -321,10 +315,6 @@ export const updateInvoice = async (req, res) => {
         const updatedFields = {
             client: clientId || existingInvoice.client,
             items: items || existingInvoice.items,
-            issueDate: issueDate || existingInvoice.issueDate,
-            dueDate: dueDate || existingInvoice.dueDate,
-            phoneNumber: phoneNumber || existingInvoice.phoneNumber,
-            email: email || existingInvoice.email,
             AccountDetails: AccountDetails || existingInvoice.AccountDetails,
             status: status || existingInvoice.status,
         };

@@ -30,6 +30,7 @@ export const getProfile = async (req, res) => {
       state: company?.state || null,
       zipCode: company?.zipCode || null,
       companyAddress: company?.companyAddress || null,
+      company: company?.id || null
     };
 
     return successResMsg(res, 200, {
